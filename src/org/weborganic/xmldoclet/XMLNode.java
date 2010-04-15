@@ -169,7 +169,7 @@ public final class XMLNode {
     try {
       String _xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + CRLF;
 
-      if (nsPrefix != null && nsPrefix.equals("")) {
+      if (nsPrefix != null && !"".equals(nsPrefix)) {
         _namespacePrefix = nsPrefix;
         this.attribute("xmlns:" + _namespacePrefix, NAMESPACE_URI);
         _namespacePrefix = _namespacePrefix + ":";
@@ -214,13 +214,13 @@ public final class XMLNode {
     }
 
     // Close open tag
-    out.append(">" + CRLF);
+    out.append(">");
+    if (!this._children.isEmpty()) out.append(CRLF);
 
     // This node has text 
     if (this._content.length() > 0) {
       // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(tabs + "\t<" + _namespacePrefix + "description>" + encode(_content.toString()) + "</" + _namespacePrefix
-          + "description>" + CRLF);
+      out.append(encode(_content.toString()));
     }
 
     // Serialise children
@@ -229,7 +229,8 @@ public final class XMLNode {
     }
 
     // Close element
-    out.append(tabs + "</" + _namespacePrefix + _name + ">" + CRLF + ("class".equalsIgnoreCase(_name)? CRLF : ""));
+    if (!this._children.isEmpty()) out.append(tabs);
+    out.append("</" + _namespacePrefix + _name + ">" + CRLF + ("class".equalsIgnoreCase(_name)? CRLF : ""));
 
     return out.toString();
   }
