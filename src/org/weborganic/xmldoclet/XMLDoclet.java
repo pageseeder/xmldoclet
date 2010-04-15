@@ -209,7 +209,7 @@ public final class XMLDoclet {
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
    * 
-   * @param classDoc The class to transform.
+   * @param doc The package to transform.
    */
   private static XMLNode toPackageNode(PackageDoc doc) {
     XMLNode node = new XMLNode("package");
@@ -218,10 +218,11 @@ public final class XMLDoclet {
     node.attribute("name", doc.name());
 
     // Comment
-    node.text(toComment(doc));
+    node.child(toComment(doc));
     
     // Child nodes
     node.child(toAnnotationsNode(doc.annotations()));
+    node.child(toStandardTags(doc));
     node.child(toTags(doc));
     node.child(toSeeNodes(doc.seeTags()));
 
@@ -270,10 +271,11 @@ public final class XMLDoclet {
     node.attribute("enum",         classDoc.isEnum());
 
     // Comment
-    node.text(toComment(classDoc));
+    node.child(toComment(classDoc));
 
     // Other child nodes
     node.child(toAnnotationsNode(classDoc.annotations()));
+    node.child(toStandardTags(classDoc));
     node.child(toTags(classDoc));
     node.child(toSeeNodes(classDoc.seeTags()));
     node.child(toFieldsNode(classDoc.fields()));
@@ -314,9 +316,10 @@ public final class XMLDoclet {
     node.attribute("visibility", getVisibility(field));
 
     // Comment
-    node.text(toComment(field));
+    node.child(toComment(field));
 
     // Other child nodes
+    node.child(toStandardTags(field));
     node.child(toTags(field));
     node.child(toSeeNodes(field.seeTags()));
 
@@ -412,13 +415,35 @@ public final class XMLDoclet {
     node.attribute("synthetic",    member.isSynthetic());
 
     // Comment
-    node.text(toComment(member));
+    node.child(toComment(member));
 
     // Other objects attached to the method/constructor.
     node.child(toTags(member));
     node.child(toSeeNodes(member.seeTags()));
     node.child(toParametersNode(member.parameters(),       member.paramTags()));
     node.child(toExceptionsNode(member.thrownExceptions(), member.throwsTags()));
+  }
+
+  /**
+   * Transforms common tags on the Doc object into XML.
+   * 
+   * @param doc The Doc object.
+   * @return The corresponding list of nodes.
+   */
+  private static List<XMLNode> toStandardTags(Doc doc) {
+    // Create the comment node
+    List<XMLNode> nodes = new ArrayList<XMLNode>();
+
+    // Handle the tags
+    for (Tag tag : doc.tags()) {
+      Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
+      if (taglet instanceof BlockTag) {
+        nodes.add(((BlockTag) taglet).toXMLNode(tag));
+      }
+    }
+
+    // Add the node to the host
+    return nodes;
   }
 
   /**
@@ -436,7 +461,7 @@ public final class XMLDoclet {
     // Handle the tags
     for (Tag tag : doc.tags()) {
       Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
-      if (taglet != null) {
+      if (taglet != null && !(taglet instanceof BlockTag)) {
         XMLNode tNode = new XMLNode("tag");
         tNode.attribute("name", tag.name());
         tNode.text(taglet.toString(tag));
@@ -452,8 +477,12 @@ public final class XMLDoclet {
   // Aggregate XML methods ========================================================================
 
   /**
+   * Returns the XML for the specified parameters using the param tags for additional description.
    * 
-   * @return
+   * @param parameters parameters instances to process
+   * @param tags       corresponding parameter tags (not necessarily in the same order)
+   * 
+   * @return the XML for the specified parameters using the param tags for additional description.
    */
   private static XMLNode toParametersNode(Parameter[] parameters, ParamTag[] tags) {
     if (parameters.length == 0) return null;
@@ -469,8 +498,12 @@ public final class XMLDoclet {
   }
 
   /**
+   * Returns the XML for the specified exceptions using the throws tags for additional description.
    * 
-   * @return
+   * @param exceptions exceptions instances to process
+   * @param tags       corresponding throws tags (not necessarily in the same order)
+   * 
+   * @return the XML for the specified parameters using the param tags for additional description.
    */
   private static XMLNode toExceptionsNode(ClassDoc[] exceptions, ThrowsTag[] tags) {
     if (exceptions.length == 0) return null;
@@ -604,8 +637,9 @@ public final class XMLDoclet {
    * @param doc The Doc object.
    * @param node The node to add the comment nodes to.
    */
-  private static String toComment(Doc doc) {
+  private static XMLNode toComment(Doc doc) {
     if (doc.commentText() == null || doc.commentText().length() == 0) return null;
+    XMLNode node = new XMLNode("comment");
     StringBuilder comment = new StringBuilder();
 
     // Analyse each token and produce comment node 
@@ -615,7 +649,7 @@ public final class XMLDoclet {
       else comment.append(t.text());
     }
 
-    return comment.toString();
+    return node.text(comment.toString());
   }
 
   /**
@@ -661,7 +695,7 @@ public final class XMLDoclet {
     XMLNode node = new XMLNode("element");
     AnnotationTypeElementDoc element = pair.element();
     node.attribute("name", element.name());
-    node.text(toComment(element));
+    node.child(toComment(element));
     node.child(toAnnotationValueNode(pair.value()));
     return node;
   }
