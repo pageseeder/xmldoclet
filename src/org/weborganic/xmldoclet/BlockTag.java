@@ -19,6 +19,13 @@ public enum BlockTag implements Taglet {
     /**
      * {@inheritDoc} 
      */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("author").text(tag.text());
+    }
+
+    /**
+     * {@inheritDoc} 
+     */
     public String toString(Tag tag) {
       return "<author>"+tag.text()+"</author>";
     }
@@ -41,6 +48,13 @@ public enum BlockTag implements Taglet {
     /**
      * {@inheritDoc} 
      */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("deprecated").text(tag.text());
+    }
+
+    /**
+     * {@inheritDoc} 
+     */
     public String toString(Tag tag) {
       return tag.text();
     }
@@ -59,6 +73,14 @@ public enum BlockTag implements Taglet {
   },
 
   SERIAL("serial", false){
+    
+    /**
+     * {@inheritDoc} 
+     */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("serial").text(tag.text());
+    }
+
     /**
      * {@inheritDoc} 
      */
@@ -80,6 +102,14 @@ public enum BlockTag implements Taglet {
   },
 
   SERIALDATA("serialData", false){
+    
+    /**
+     * {@inheritDoc} 
+     */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("serialData").text(tag.text());
+    }
+
     /**
      * {@inheritDoc} 
      */
@@ -101,6 +131,14 @@ public enum BlockTag implements Taglet {
   },
   
   SERIALFIELD("serialField", false){
+    
+    /**
+     * {@inheritDoc} 
+     */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("serialField").text(tag.text());
+    }
+
     /**
      * {@inheritDoc} 
      */
@@ -122,6 +160,14 @@ public enum BlockTag implements Taglet {
   },
 
   SINCE("since", false){
+    
+    /**
+     * {@inheritDoc} 
+     */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("since").text(tag.text());
+    }
+
     /**
      * {@inheritDoc} 
      */
@@ -148,8 +194,15 @@ public enum BlockTag implements Taglet {
     /**
      * {@inheritDoc} 
      */
+    public XMLNode toXMLNode(Tag tag) {
+      return new XMLNode("version").text(tag.text());
+    }
+
+    /**
+     * {@inheritDoc} 
+     */
     public String toString(Tag tag) {
-      return tag.text();
+      return "<version>"+tag.text()+"</version>";
     }
 
     /**
@@ -173,11 +226,6 @@ public enum BlockTag implements Taglet {
   private final String _name; 
 
   /**
-   * Whether this is an inline tag;
-   */  
-  private final boolean _inline;
-
-  /**
    * Creates a new tag.
    * 
    * @param name   The name of the tag.
@@ -185,8 +233,12 @@ public enum BlockTag implements Taglet {
    */
   BlockTag(String name, boolean inline) {
     this._name = name;
-    this._inline = inline;
   }
+
+  /**
+   * Returns the XML node corresponding to this taglet.
+   */
+  public abstract XMLNode toXMLNode(Tag tag);
 
   /** {@inheritDoc} */
   public String getName() {
@@ -195,7 +247,7 @@ public enum BlockTag implements Taglet {
 
   /** {@inheritDoc} */
   public boolean isInlineTag() {
-    return this._inline;
+    return false;
   }
 
   /** {@inheritDoc} */
