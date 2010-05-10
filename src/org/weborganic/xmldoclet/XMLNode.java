@@ -29,7 +29,7 @@ import org.w3c.tidy.Tidy;
  * 
  * @author Christophe Lauret
  * 
- * @version 29 March 2010
+ * @version 23 April 2010
  */
 public final class XMLNode {
 
@@ -87,7 +87,8 @@ public final class XMLNode {
    * @param value the value for the attribute
    */
   public XMLNode attribute(String name, String value) {
-    this._attributes.put(name, value);
+    if (value != null)
+      this._attributes.put(name, value);
     return this;
   }
 

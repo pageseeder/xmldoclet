@@ -624,8 +624,8 @@ public final class XMLDoclet {
     XMLNode node = new XMLNode("exception");
     node.attribute("type", exception.typeName());
     node.attribute("fulltype", exception.qualifiedTypeName());
-    node.attribute("comment", tag.exceptionComment());
-    if (tag!= null) {
+    if (tag != null) {
+      node.attribute("comment", tag.exceptionComment());
       node.text(toComment(tag));
     }
     return node;
