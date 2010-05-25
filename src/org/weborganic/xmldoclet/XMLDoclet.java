@@ -160,6 +160,7 @@ public final class XMLDoclet {
       // Index
       XMLNode root = new XMLNode("root");
       root.child(meta);
+      root.attribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
       for (XMLNode node : nodes) {
         XMLNode ref = new XMLNode(node.getName());
         ref.attribute("xlink:type", "simple");
