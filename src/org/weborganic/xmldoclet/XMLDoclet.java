@@ -200,8 +200,10 @@ public final class XMLDoclet {
     }
 
     // Iterate over packages
-    for (PackageDoc doc : root.specifiedPackages()) {
-      nodes.add(toPackageNode(doc));
+    if (!options.hasFilter()) {
+      for (PackageDoc doc : root.specifiedPackages()) {
+        nodes.add(toPackageNode(doc));
+      }
     }
 
     return nodes;
@@ -728,6 +730,7 @@ public final class XMLDoclet {
 
     return node;
   }
+
   // Utilities ====================================================================================
 
   /**
@@ -760,7 +763,7 @@ public final class XMLDoclet {
   }
 
   /**
-   * Find the corresponding parameter tag
+   * Find the corresponding parameter tag.
    * 
    * @return
    */
@@ -773,6 +776,12 @@ public final class XMLDoclet {
     return null;
   }
 
+  /**
+   * Returns the value type of the annotation depending on the specified object's class. 
+   * 
+   * @param o the object representing the type of annotation value.
+   * @return the primitive if any of full class name.
+   */
   private static String getAnnotationValueType(Object o) {
     if (o instanceof String)  return "String";
     if (o instanceof Integer) return "int";

@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.DocErrorReporter;
 import com.sun.tools.doclets.Taglet;
@@ -22,7 +23,7 @@ import com.sun.tools.doclets.Taglet;
  * 
  * @author Christophe Lauret
  *
- * @version 30 March 2010
+ * @version 21 June 2010
  */
 public final class Options {
 
@@ -69,6 +70,11 @@ public final class Options {
    * Filter classes implementing the specified class.
    */
   private String implementsFilter = null;
+
+  /**
+   * Filter classes with the specified annotation.  
+   */
+  private String annotationFilter = null;
 
   /**
    * The taglets loaded by this doclet.
@@ -143,8 +149,18 @@ public final class Options {
   }
 
   /**
+   * Indicates whether these options specify a filter.
+   * 
+   * @return <code>true</code> if the class must implement or extends or have a specific annotation.
+   *         <code>false</code> otherwise.
+   */
+  public boolean hasFilter() {
+    return this.extendsFilter != null || this.implementsFilter != null || this.annotationFilter != null;
+  }
+
+  /**
    * Filters the included set of classes by checking whether the given class matches the 
-   * '-extends' and '-implements' options.
+   * '-extends', '-implements' and '-annotated' options.
    * 
    * @param doc the class documentation.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise. 
@@ -163,6 +179,15 @@ public final class Options {
       }
       return false; 
     }
+    // Annotation
+    if (this.annotationFilter != null) {
+      AnnotationDesc[] annotations = doc.annotations();
+      for (AnnotationDesc i : annotations) {
+        if (this.annotationFilter.equals(i.annotationType().qualifiedName())) return true;
+      }
+      return false; 
+    }
+
     // No filtering
     return true;
   }
@@ -195,6 +220,7 @@ public final class Options {
     if ("-filename".equals(option)) return 2;
     if ("-implements".equals(option)) return 2;
     if ("-extends".equals(option)) return 2;
+    if ("-annotated".equals(option)) return 2;
     if ("-tag".equals(option)) return 2;
     if ("-taglet".equals(option)) return 2;
     return 0;
@@ -257,6 +283,15 @@ public final class Options {
         o.extendsFilter = superclass;
         reporter.printNotice("Filtering classes extending: "+superclass);
       } else reporter.printWarning("'-extends' option ignored - superclass not specified");
+    }
+
+    // Annotated 
+    if (has(options, "-annotated")) {
+      String annotation = get(options, "-annotated");
+      if (annotation != null) {
+        o.annotationFilter = annotation;
+        reporter.printNotice("Filtering classes annotated: "+annotation);
+      } else reporter.printWarning("'-annotated' option ignored - annotation not specified");
     }
 
     // Implements 
