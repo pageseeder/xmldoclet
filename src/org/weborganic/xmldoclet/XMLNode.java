@@ -2,7 +2,7 @@
  * This file is part of the Weborganic XMLDoclet library.
  *
  * For licensing information please see the file license.txt included in the release.
- * A copy of this licence can also be found at 
+ * A copy of this licence can also be found at
  *   http://www.opensource.org/licenses/artistic-license-2.0.php
  */
 package org.weborganic.xmldoclet;
@@ -15,7 +15,6 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,9 +25,9 @@ import org.w3c.tidy.Tidy;
 
 /**
  * Represents an XML node.
- * 
+ *
  * @author Christophe Lauret
- * 
+ *
  * @version 23 April 2010
  */
 public final class XMLNode {
@@ -70,7 +69,7 @@ public final class XMLNode {
 
   /**
    * Constructs the XMLNode.
-   * 
+   *
    * @param name The name of the element
    */
   public XMLNode(String name) {
@@ -82,7 +81,7 @@ public final class XMLNode {
 
   /**
    * Adds an attribute to the node
-   * 
+   *
    * @param name  the name of the attribute.
    * @param value the value for the attribute
    */
@@ -94,7 +93,7 @@ public final class XMLNode {
 
   /**
    * Adds an attribute to the node
-   * 
+   *
    * @param name  the name of the attribute
    * @param value the value for the attribute
    */
@@ -105,7 +104,7 @@ public final class XMLNode {
 
   /**
    * Adds a list of child nodes.
-   * 
+   *
    * @param nodes The nodes to add.
    * @return this node for chaining.
    */
@@ -116,7 +115,7 @@ public final class XMLNode {
 
   /**
    * Adds a child node.
-   * 
+   *
    * @param node The node
    * @return this node for chaining.
    */
@@ -128,7 +127,7 @@ public final class XMLNode {
 
   /**
    * Adds text to the content of the node.
-   * 
+   *
    * @param text The text.
    * @return this node for chaining.
    */
@@ -140,7 +139,7 @@ public final class XMLNode {
 
   /**
    * Returns the specified attributed.
-   * 
+   *
    * @param name The key for the value to be retrieved.
    * @return The value stored in the attribute hash for the given key.
    */
@@ -150,20 +149,20 @@ public final class XMLNode {
 
   /**
    * Returns the name of the node.
-   * 
+   *
    * @param name The name of the node.
    * @return The name of the node.
    */
   public String getName() {
     return this._name;
   }
-  
+
   /**
    * Saves this XML node to the directory specified.
-   * 
+   *
    * @param dir  the directory to save this node to.
    * @param name the name of the file
-   * 
+   *
    * @param encoding the character encoding used for the output.
    */
   public void save(File dir, String name, Charset encoding, String nsPrefix) {
@@ -171,9 +170,9 @@ public final class XMLNode {
       String _xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + CRLF;
 
       if (nsPrefix != null && !"".equals(nsPrefix)) {
-        _namespacePrefix = nsPrefix;
-        this.attribute("xmlns:" + _namespacePrefix, NAMESPACE_URI);
-        _namespacePrefix = _namespacePrefix + ":";
+        this._namespacePrefix = nsPrefix;
+        this.attribute("xmlns:" + this._namespacePrefix, NAMESPACE_URI);
+        this._namespacePrefix = this._namespacePrefix + ":";
       }
 
       // Write out to the file
@@ -193,15 +192,15 @@ public final class XMLNode {
 
   /**
    * Converts the XML node to a String.
-   * 
+   *
    * @param tabs The tabs used for indentation.
-   * @return the String representation of this node and its children.  
+   * @return the String representation of this node and its children.
    */
   public String toString(String tabs) {
     StringBuilder out = new StringBuilder();
 
     // Open element
-    out.append(tabs + "<" + _namespacePrefix + _name);
+    out.append(tabs + "<" + this._namespacePrefix + this._name);
 
     // Serialise the attributes
     for (Entry<String, String> att : this._attributes.entrySet()) {
@@ -218,10 +217,10 @@ public final class XMLNode {
     out.append(">");
     if (!this._children.isEmpty()) out.append(CRLF);
 
-    // This node has text 
+    // This node has text
     if (this._content.length() > 0) {
       // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(encode(_content.toString()));
+      out.append(encode(this._content.toString()));
     }
 
     // Serialise children
@@ -231,14 +230,14 @@ public final class XMLNode {
 
     // Close element
     if (!this._children.isEmpty()) out.append(tabs);
-    out.append("</" + _namespacePrefix + _name + ">" + CRLF + ("class".equalsIgnoreCase(_name)? CRLF : ""));
+    out.append("</" + this._namespacePrefix + this._name + ">" + CRLF + ("class".equalsIgnoreCase(this._name)? CRLF : ""));
 
     return out.toString();
   }
 
   /**
    * Encodes strings as XML. Check for <, >, ', ", &.
-   * 
+   *
    * @param text The input string.
    * @return The encoded string.
    */
@@ -252,7 +251,7 @@ public final class XMLNode {
 
   /**
    * Encodes strings as XML. Check for <, >, ', ", &.
-   * 
+   *
    * @param in The input string.
    * @return The encoded string.
    */
@@ -272,7 +271,7 @@ public final class XMLNode {
 
   /**
    * Encodes strings as XML. Check for <, >, ', ", &.
-   * 
+   *
    * @param in The input string.
    * @return The encoded string.
    */
@@ -294,7 +293,7 @@ public final class XMLNode {
 
   /**
    * Tidy the text for inclusion as a comment description.
-   * 
+   *
    * @param text the HTML body text to tidy
    * @return the tidied HTML
    */

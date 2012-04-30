@@ -5,7 +5,7 @@ import com.sun.tools.doclets.Taglet;
 
 /**
  * A collection of taglets to support the standard javadoc tags.
- * 
+ *
  * @author Christophe Lauret
  * @version 3 April 2010
  */
@@ -16,23 +16,17 @@ public enum BlockTag implements Taglet {
    */
   AUTHOR("author", false) {
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("author").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return "<author>"+tag.text()+"</author>";
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -45,23 +39,17 @@ public enum BlockTag implements Taglet {
 
   DEPRECATED("deprecated", false){
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("deprecated").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return tag.text();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -73,24 +61,18 @@ public enum BlockTag implements Taglet {
   },
 
   SERIAL("serial", false){
-    
-    /**
-     * {@inheritDoc} 
-     */
+
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("serial").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return tag.text();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -102,24 +84,18 @@ public enum BlockTag implements Taglet {
   },
 
   SERIALDATA("serialData", false){
-    
-    /**
-     * {@inheritDoc} 
-     */
+
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("serialData").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return tag.text();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -129,26 +105,20 @@ public enum BlockTag implements Taglet {
     }
 
   },
-  
+
   SERIALFIELD("serialField", false){
-    
-    /**
-     * {@inheritDoc} 
-     */
+
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("serialField").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return tag.text();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -160,24 +130,18 @@ public enum BlockTag implements Taglet {
   },
 
   SINCE("since", false){
-    
-    /**
-     * {@inheritDoc} 
-     */
+
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("since").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return tag.text();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -188,26 +152,20 @@ public enum BlockTag implements Taglet {
 
   },
 
-  
+
   VERSION("version", false){
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public XMLNode toXMLNode(Tag tag) {
       return new XMLNode("version").text(tag.text());
     }
 
-    /**
-     * {@inheritDoc} 
-     */
+    @Override
     public String toString(Tag tag) {
       return "<version>"+tag.text()+"</version>";
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString(Tag[] tags) {
       StringBuilder out = new StringBuilder();
       for (Tag t : tags) {
@@ -223,11 +181,11 @@ public enum BlockTag implements Taglet {
   /**
    * The name of the tag
    */
-  private final String _name; 
+  private final String _name;
 
   /**
    * Creates a new tag.
-   * 
+   *
    * @param name   The name of the tag.
    * @param inline <code>true</code> for an inline tag; <code>false</code> otherwise.
    */
@@ -240,42 +198,42 @@ public enum BlockTag implements Taglet {
    */
   public abstract XMLNode toXMLNode(Tag tag);
 
-  /** {@inheritDoc} */
+  @Override
   public String getName() {
     return this._name;
   }
 
-  /** {@inheritDoc} */
+  @Override
   public boolean isInlineTag() {
     return false;
   }
 
-  /** {@inheritDoc} */
+  @Override
   public boolean inConstructor() {
     return true;
   }
 
-  /** {@inheritDoc} */
+  @Override
   public boolean inField(){
     return true;
   }
-  
-  /** {@inheritDoc} */
+
+  @Override
   public boolean inMethod() {
     return true;
   }
-  
-  /** {@inheritDoc} */
+
+  @Override
   public boolean inOverview() {
     return true;
   }
-  
-  /** {@inheritDoc} */
+
+  @Override
   public boolean inPackage() {
     return true;
   }
-  
-  /** {@inheritDoc} */
+
+  @Override
   public boolean inType() {
     return true;
   }

@@ -2,7 +2,7 @@
  * This file is part of the Weborganic XMLDoclet library.
  *
  * For licensing information please see the file license.txt included in the release.
- * A copy of this licence can also be found at 
+ * A copy of this licence can also be found at
  *   http://www.opensource.org/licenses/artistic-license-2.0.php
  */
 package org.weborganic.xmldoclet;
@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.sun.javadoc.AnnotationDesc;
+import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 import com.sun.javadoc.AnnotationTypeElementDoc;
 import com.sun.javadoc.AnnotationValue;
 import com.sun.javadoc.ClassDoc;
@@ -35,16 +36,15 @@ import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.SeeTag;
 import com.sun.javadoc.Tag;
 import com.sun.javadoc.ThrowsTag;
-import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 import com.sun.tools.doclets.Taglet;
 
 /**
  * The Doclet implementation to use with javadoc.
- * 
+ *
  * <p>A Doclet to be used with JavaDoc which will output XML with all of the information from the JavaDoc.
- * 
+ *
  * @author Christophe Lauret
- * 
+ *
  * @version 4 April 2010
  */
 public final class XMLDoclet {
@@ -63,13 +63,13 @@ public final class XMLDoclet {
 
   /**
    * Processes the JavaDoc documentation.
-   * 
+   *
    * <p>This method is required for all doclets.
-   * 
+   *
    * @see com.sun.javadoc.Doclet#start(RootDoc)
-   * 
+   *
    * @param root The root of the documentation tree.
-   * 
+   *
    * @return <code>true</code> if processing was successful.
    */
   public static boolean start(RootDoc root) {
@@ -84,11 +84,11 @@ public final class XMLDoclet {
 
   /**
    * Returns the version of the Java Programming Language supported by this Doclet.
-   * 
+   *
    * <p>This Doclet supports Java 5.
-   * 
+   *
    * @see com.sun.javadoc.Doclet#languageVersion()
-   * 
+   *
    * @return {@value LanguageVersion#JAVA_1_5}
    */
   public static LanguageVersion languageVersion() {
@@ -97,14 +97,14 @@ public final class XMLDoclet {
 
   /**
    * Returns the number of arguments required for the given option.
-   * 
+   *
    * <p>This method calls {@link Options#getLength(String)}.
-   * 
+   *
    * @see com.sun.javadoc.Doclet#optionLength(String)
    * @see Options#getLength(String)
-   * 
+   *
    * @param option The name of the option.
-   * 
+   *
    * @return The number of arguments for that option.
    */
   public static int optionLength(String option) {
@@ -113,18 +113,18 @@ public final class XMLDoclet {
 
   /**
    * Check that options have the correct arguments.
-   * 
-   * <p>This method is not required, but is recommended, as every option will be considered valid 
+   *
+   * <p>This method is not required, but is recommended, as every option will be considered valid
    * if this method is not present. It will default gracefully (to true) if absent.
    *
-   * <p>Printing option related error messages (using the provided DocErrorReporter) is the 
+   * <p>Printing option related error messages (using the provided DocErrorReporter) is the
    * responsibility of this method.
-   * 
+   *
    * @see com.sun.javadoc.Doclet#validOptions(String[][], DocErrorReporter)
-   * 
+   *
    * @param options The two dimensional array of options.
    * @param reporter The error reporter.
-   * 
+   *
    * @return <code>true</code> if the options are valid.
    */
   public static boolean validOptions(String o[][], DocErrorReporter reporter) {
@@ -137,15 +137,15 @@ public final class XMLDoclet {
 
   /**
    * Save the given array of nodes.
-   * 
+   *
    * Will either save the files individually, or as a single file depending on the existence of the "-multiple" flag.
-   * 
+   *
    * @param nodes The array of nodes to be saved.
    */
   private static void save(List<XMLNode> nodes) {
     // Add admin node
     XMLNode meta = new XMLNode("meta");
-    DateFormat df = new SimpleDateFormat(ISO_8601); 
+    DateFormat df = new SimpleDateFormat(ISO_8601);
     meta.attribute("created", df.format(new Date()));
 
     // Multiple files
@@ -185,14 +185,14 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML nodes for all the selected classes in the specified RootDoc.
-   * 
+   *
    * @param root The RootDoc from which the XML should be built.
    * @return The list of XML nodes which represents the RootDoc.
    */
   private static List<XMLNode> toXMLNodes(RootDoc root) {
     List<XMLNode> nodes = new ArrayList<XMLNode>();
 
-    // Iterate over the classes    
+    // Iterate over the classes
     for (ClassDoc doc : root.classes()) {
       if (options.filter(doc)) {
         nodes.add(toClassNode(doc));
@@ -211,7 +211,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
-   * 
+   *
    * @param doc The package to transform.
    */
   private static XMLNode toPackageNode(PackageDoc doc) {
@@ -222,7 +222,7 @@ public final class XMLDoclet {
 
     // Comment
     node.child(toComment(doc));
-    
+
     // Child nodes
     node.child(toAnnotationsNode(doc.annotations()));
     node.child(toStandardTags(doc));
@@ -234,7 +234,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
-   * 
+   *
    * @param classDoc The class to transform.
    */
   private static XMLNode toClassNode(ClassDoc classDoc) {
@@ -295,7 +295,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the specified field as an XML node.
-   * 
+   *
    * @param field A field.
    * @return The corresponding node.
    */
@@ -331,7 +331,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the .
-   * 
+   *
    * @param constructors The constructors.
    * @param node The node to add the XML to.
    */
@@ -353,7 +353,7 @@ public final class XMLDoclet {
 
   /**
    * Transforms an array of methods and an array of constructor methods into XML and adds those to the host node.
-   * 
+   *
    * @param methods The methods.
    * @param constructors The constructors.
    * @param node The node to add the XML to.
@@ -387,7 +387,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the fields node.
-   * 
+   *
    * @param fields The set of fields.
    * @return the fields or <code>null</code> if none.
    */
@@ -398,12 +398,12 @@ public final class XMLDoclet {
     for (FieldDoc field : fields) {
       node.child(toFieldNode(field));
     }
-    return node; 
+    return node;
   }
 
   /**
-   * Set the commons attribute and child nodes for method and constructor nodes. 
-   * 
+   * Set the commons attribute and child nodes for method and constructor nodes.
+   *
    * @param member The executable member documentation.
    * @param node The node to update
    */
@@ -429,7 +429,7 @@ public final class XMLDoclet {
 
   /**
    * Transforms common tags on the Doc object into XML.
-   * 
+   *
    * @param doc The Doc object.
    * @return The corresponding list of nodes.
    */
@@ -451,7 +451,7 @@ public final class XMLDoclet {
 
   /**
    * Transforms comments on the Doc object into XML.
-   * 
+   *
    * @param doc The Doc object.
    * @param node The node to add the comment nodes to.
    */
@@ -460,7 +460,7 @@ public final class XMLDoclet {
     XMLNode node = new XMLNode("tags");
 
     boolean hasTags = false;
-    
+
     // Handle the tags
     for (Tag tag : doc.tags()) {
       Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
@@ -481,10 +481,10 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML for the specified parameters using the param tags for additional description.
-   * 
+   *
    * @param parameters parameters instances to process
    * @param tags       corresponding parameter tags (not necessarily in the same order)
-   * 
+   *
    * @return the XML for the specified parameters using the param tags for additional description.
    */
   private static XMLNode toParametersNode(Parameter[] parameters, ParamTag[] tags) {
@@ -502,10 +502,10 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML for the specified exceptions using the throws tags for additional description.
-   * 
+   *
    * @param exceptions exceptions instances to process
    * @param tags       corresponding throws tags (not necessarily in the same order)
-   * 
+   *
    * @return the XML for the specified parameters using the param tags for additional description.
    */
   private static XMLNode toExceptionsNode(ClassDoc[] exceptions, ThrowsTag[] tags) {
@@ -523,13 +523,13 @@ public final class XMLDoclet {
 
   /**
    * Transforms comments on the Doc object into XML.
-   * 
+   *
    * @param doc The Doc object.
    * @param node The node to add the comment nodes to.
    */
   private static List<XMLNode> toSeeNodes(SeeTag[] tags) {
     if (tags == null || tags.length == 0) return Collections.emptyList();
-   
+
     List<XMLNode> nodes = new ArrayList<XMLNode>(tags.length);
     for (SeeTag tag : tags) {
       XMLNode n = toSeeNode(tag);
@@ -542,7 +542,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
-   * 
+   *
    * @param classDoc The class to transform.
    */
   private static XMLNode toAnnotationsNode(AnnotationDesc[] annotations) {
@@ -560,7 +560,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML for a see tag.
-   * 
+   *
    * @param tag The See tag to process.
    */
   private static XMLNode toSeeNode(SeeTag tag) {
@@ -596,13 +596,13 @@ public final class XMLDoclet {
     } else {
       see.attribute("xlink:href", tag.text());
     }
-    
+
     return see;
   }
 
   /**
    * Returns the XML for a parameter and its corresponding param tag.
-   * 
+   *
    * @return The corresponding XML.
    */
   private static XMLNode toParameterNode(Parameter parameter, ParamTag tag) {
@@ -619,7 +619,7 @@ public final class XMLDoclet {
 
   /**
    * Returns the XML for an exception and its corresponding throws tag.
-   * 
+   *
    * @return The corresponding XML.
    */
   private static XMLNode toExceptionNode(ClassDoc exception, ThrowsTag tag) {
@@ -636,7 +636,7 @@ public final class XMLDoclet {
 
   /**
    * Transforms comments on the Doc object into XML.
-   * 
+   *
    * @param doc The Doc object.
    * @param node The node to add the comment nodes to.
    */
@@ -645,7 +645,7 @@ public final class XMLDoclet {
     XMLNode node = new XMLNode("comment");
     StringBuilder comment = new StringBuilder();
 
-    // Analyse each token and produce comment node 
+    // Analyse each token and produce comment node
     for (Tag t : doc.inlineTags()) {
       Taglet taglet = options.getTagletForName(t.name());
       if (taglet != null) comment.append(taglet.toString(t));
@@ -657,7 +657,7 @@ public final class XMLDoclet {
 
   /**
    * Transforms comments on the Doc object into XML.
-   * 
+   *
    * @param doc The Doc object.
    * @param node The node to add the comment nodes to.
    */
@@ -665,7 +665,7 @@ public final class XMLDoclet {
     if (tag.text() == null || tag.text().length() == 0) return null;
     StringBuilder comment = new StringBuilder();
 
-    // Analyse each token and produce comment node 
+    // Analyse each token and produce comment node
     for (Tag t : tag.inlineTags()) {
       Taglet taglet = options.getTagletForName(t.name());
       if (taglet != null) comment.append(taglet.toString(t));
@@ -676,7 +676,7 @@ public final class XMLDoclet {
   }
 
   /**
-   * 
+   *
    * @return
    */
   private static XMLNode toAnnotationNode(AnnotationDesc annotation) {
@@ -690,7 +690,7 @@ public final class XMLDoclet {
   }
 
   /**
-   * 
+   *
    * @return
    */
   private static XMLNode toPairNode(ElementValuePair pair) {
@@ -704,7 +704,7 @@ public final class XMLDoclet {
   }
 
   /**
-   * 
+   *
    * @return
    */
   private static XMLNode toAnnotationValueNode(AnnotationValue value) {
@@ -735,7 +735,7 @@ public final class XMLDoclet {
 
   /**
    * Sets the visibility for the class, method or field.
-   * 
+   *
    * @param member The member for which the visibility needs to be set (class, method, or field).
    * @param node The node to which the visibility should be set.
    */
@@ -750,7 +750,7 @@ public final class XMLDoclet {
 
   /**
    * Find the corresponding throws tag
-   * 
+   *
    * @return
    */
   private static ThrowsTag find(ThrowsTag[] tags, String name){
@@ -764,7 +764,7 @@ public final class XMLDoclet {
 
   /**
    * Find the corresponding parameter tag.
-   * 
+   *
    * @return
    */
   private static ParamTag find(ParamTag[] tags, String name){
@@ -777,8 +777,8 @@ public final class XMLDoclet {
   }
 
   /**
-   * Returns the value type of the annotation depending on the specified object's class. 
-   * 
+   * Returns the value type of the annotation depending on the specified object's class.
+   *
    * @param o the object representing the type of annotation value.
    * @return the primitive if any of full class name.
    */
