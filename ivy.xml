@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ivy-module version="2.0">
+  <info organisation="weborganic" module="wo-xmldoclet"/>
+  <dependencies>
+    <dependency org="javax"        name="tools"           rev="1.6.0_10"/>
+    <dependency org="w3c"          name="jtidy"           rev="r938"/>
+  </dependencies>
+</ivy-module>
