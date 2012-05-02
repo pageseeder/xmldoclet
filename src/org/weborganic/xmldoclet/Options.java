@@ -10,7 +10,9 @@ package org.weborganic.xmldoclet;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.sun.javadoc.AnnotationDesc;
@@ -303,6 +305,29 @@ public final class Options {
       } else reporter.printWarning("'-implements' option ignored - interface not specified");
     }
 
+    // Custom Tags
+    if (has(options, "-tag")) {
+      List<String> tags = getAll(options, "-tag");
+      for (String def : tags) {
+        int colon = def.indexOf(':');
+        String name = colon < 0? def : def.substring(0, colon);
+        CustomTag tag = new CustomTag(name, true);
+        if (colon >= 0) {
+          // scope
+          String scope = def.substring(colon+1);
+          colon = scope.indexOf(':');
+          if (colon >= 0) {
+            String title = scope.substring(colon+1);
+            scope = scope.substring(0, colon);
+            tag.setTitle(title);
+          }
+          tag.setScope(scope);
+        }
+        o.taglets.put('@'+name, new CustomTag(name, true));
+        reporter.printNotice("Using Tag "+name);
+      }
+    }
+
     // Taglets
     if (has(options, "-taglet")) {
       String classes = get(options, "-taglet");
@@ -338,6 +363,24 @@ public final class Options {
       if (option[0].equals(name)) return true;
     }
     return false;
+  }
+
+  /**
+   * Returns the list of single values for the specified option if defined.
+   *
+   * @param options the matrix of command line options.
+   * @param name    the name of the requested option.
+   *
+   * @return the array value if available or <code>null</code>.
+   */
+  private static List<String> getAll(String[][] options, String name) {
+    List<String> values = new ArrayList<String>();
+    for (String[] option : options) {
+      if (option[0].equals(name)) {
+        if (option.length > 1) values.add(option[1]);
+      }
+    }
+    return values;
   }
 
   /**
