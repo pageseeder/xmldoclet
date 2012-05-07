@@ -172,8 +172,8 @@ public final class XMLDoclet {
       }
       // Index
       XMLNode root = new XMLNode("root");
-      root.child(meta);
       root.attribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+      root.child(meta);
       for (XMLNode node : nodes) {
         String name = node.getAttribute("name");
         if (options.useSubFolders()) name = name.replace('.', '/');
@@ -189,6 +189,7 @@ public final class XMLDoclet {
     } else {
       // Wrap the XML
       XMLNode root = new XMLNode("root");
+      root.attribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
       root.child(meta);
       for (XMLNode node : nodes) {
         root.child(node);
