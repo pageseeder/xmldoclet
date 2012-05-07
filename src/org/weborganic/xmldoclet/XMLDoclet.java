@@ -7,6 +7,7 @@
  */
 package org.weborganic.xmldoclet;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import com.sun.tools.doclets.Taglet;
  *
  * @author Christophe Lauret
  *
- * @version 4 April 2010
+ * @version 7 May 2012
  */
 public final class XMLDoclet {
 
@@ -151,20 +152,33 @@ public final class XMLDoclet {
     // Multiple files
     if (options.useMultipleFiles()) {
       for (XMLNode node : nodes) {
+        File dir = options.getDirectory();
+        String name = node.getAttribute("name");
+        if (options.useSubFolders()) {
+          name = name.replace('.', '/');
+          int x = name.lastIndexOf('/');
+          if (x >= 0) {
+            dir = new File(dir, name.substring(0,x));
+            dir.mkdirs();
+            name = name.substring(x+1);
+          }
+        }
         XMLNode root = new XMLNode("root");
         root.child(meta);
         root.child(node);
-        String fileName = node.getAttribute("name") + ".xml";
-        root.save(options.getDirectory(), fileName, options.getEncoding(), "");
+        String fileName = name + ".xml";
+        root.save(dir, fileName, options.getEncoding(), "");
       }
       // Index
       XMLNode root = new XMLNode("root");
       root.child(meta);
       root.attribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
       for (XMLNode node : nodes) {
+        String name = node.getAttribute("name");
+        if (options.useSubFolders()) name = name.replace('.', '/');
         XMLNode ref = new XMLNode(node.getName());
         ref.attribute("xlink:type", "simple");
-        ref.attribute("xlink:href", node.getAttribute("name") + ".xml");
+        ref.attribute("xlink:href", name + ".xml");
         root.child(ref);
       }
       String fileName = "index.xml";
@@ -215,7 +229,7 @@ public final class XMLDoclet {
    * @param doc The package to transform.
    */
   private static XMLNode toPackageNode(PackageDoc doc) {
-    XMLNode node = new XMLNode("package");
+    XMLNode node = new XMLNode("package", doc);
 
     // Core attributes
     node.attribute("name", doc.name());
@@ -238,7 +252,7 @@ public final class XMLDoclet {
    * @param classDoc The class to transform.
    */
   private static XMLNode toClassNode(ClassDoc classDoc) {
-     XMLNode node = new XMLNode("class");
+     XMLNode node = new XMLNode("class", classDoc);
 
     // Core attributes
     node.attribute("type",       classDoc.name());
@@ -677,7 +691,7 @@ public final class XMLDoclet {
 
   /**
    *
-   * @return
+   * @return an "annotation" XML node for the annotation.
    */
   private static XMLNode toAnnotationNode(AnnotationDesc annotation) {
     if (annotation == null) return null;
@@ -691,7 +705,7 @@ public final class XMLDoclet {
 
   /**
    *
-   * @return
+   * @return an "element" XML node for the element value pair.
    */
   private static XMLNode toPairNode(ElementValuePair pair) {
     if (pair == null) return null;
@@ -705,7 +719,7 @@ public final class XMLDoclet {
 
   /**
    *
-   * @return
+   * @return an "value" or "array" XML node for the annotation value.
    */
   private static XMLNode toAnnotationValueNode(AnnotationValue value) {
     if (value == null) return null;
