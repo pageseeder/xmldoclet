@@ -52,6 +52,13 @@ public final class Options {
   private boolean multipleFiles = false;
 
   /**
+   * Determines whether files are organised as subfolders or all in the same folder.
+   *
+   * Populated from the command line via the "-subfolders" flag.
+   */
+  private boolean subFolders = false;
+
+  /**
    * Determines the directory where output is placed.
    *
    * Populated from the command line via the "-d [directory]" flag.
@@ -108,6 +115,13 @@ public final class Options {
    */
   public boolean useMultipleFiles() {
     return this.multipleFiles;
+  }
+
+  /**
+   * Indicates whether to organise files as subfolders for packages.
+   */
+  public boolean useSubFolders() {
+    return this.subFolders;
   }
 
   /**
@@ -225,6 +239,7 @@ public final class Options {
     if ("-annotated".equals(option)) return 2;
     if ("-tag".equals(option)) return 2;
     if ("-taglet".equals(option)) return 2;
+    if ("-subfolders".equals(option)) return 1;
     return 0;
   }
 
@@ -237,7 +252,8 @@ public final class Options {
     Options o = new Options();
 
     // Flags
-    o.multipleFiles    = has(options, "-multiple");
+    o.multipleFiles = has(options, "-multiple");
+    o.subFolders    = has(options, "-subfolders");
 
     // Output directory
     if (has(options, "-d")) {

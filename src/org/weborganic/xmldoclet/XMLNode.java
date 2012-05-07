@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
@@ -23,12 +24,14 @@ import java.util.Map.Entry;
 
 import org.w3c.tidy.Tidy;
 
+import com.sun.javadoc.Doc;
+
 /**
  * Represents an XML node.
  *
  * @author Christophe Lauret
  *
- * @version 23 April 2010
+ * @version 7 May 2012
  */
 public final class XMLNode {
 
@@ -40,7 +43,12 @@ public final class XMLNode {
   /**
    * The element name.
    */
-  private String _name;
+  private final String _name;
+
+  /**
+   * The source document the node corresponds to.
+   */
+  private Doc _doc = null;
 
   /**
    * The namespace URI of all nodes.
@@ -71,12 +79,23 @@ public final class XMLNode {
    * Constructs the XMLNode.
    *
    * @param name The name of the element
+   * @param doc  The source java document the node belongs to.
    */
-  public XMLNode(String name) {
+  public XMLNode(String name, Doc doc) {
     this._name = name;
+    this._doc = doc;
     this._attributes = new HashMap<String, String>();
     this._children = new ArrayList<XMLNode>();
     this._content = new StringBuilder();
+  }
+
+  /**
+   * Constructs the XMLNode.
+   *
+   * @param name The name of the element
+   */
+  public XMLNode(String name) {
+    this(name, null);
   }
 
   /**
@@ -109,7 +128,10 @@ public final class XMLNode {
    * @return this node for chaining.
    */
   public XMLNode child(List<XMLNode> nodes) {
-    this._children.addAll(nodes);
+    for (XMLNode node : nodes) {
+      this._children.add(node);
+      node.setDoc(this._doc);
+    }
     return this;
   }
 
@@ -120,9 +142,24 @@ public final class XMLNode {
    * @return this node for chaining.
    */
   public XMLNode child(XMLNode node) {
-    if (node != null)
+    if (node != null) {
       this._children.add(node);
+      node.setDoc(this._doc);
+    }
     return this;
+  }
+
+  /**
+   * Set the doc for the node and its descendants.
+   *
+   * @param doc the doc
+   */
+  private void setDoc(Doc doc) {
+    if (doc == null) return;
+    if (this._doc == null) this._doc = doc;
+    for (XMLNode child : this._children) {
+      child.setDoc(doc);
+    }
   }
 
   /**
@@ -220,7 +257,7 @@ public final class XMLNode {
     // This node has text
     if (this._content.length() > 0) {
       // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(encode(this._content.toString()));
+      out.append(encode(this._content.toString(), this._doc));
     }
 
     // Serialise children
@@ -239,11 +276,12 @@ public final class XMLNode {
    * Encodes strings as XML. Check for <, >, ', ", &.
    *
    * @param text The input string.
+   * @param doc  The source java document the node belongs to.
    * @return The encoded string.
    */
-  private static String encode(String text) {
+  private static String encode(String text, Doc doc) {
     if (text.indexOf('<') >= 0) {
-      return tidy(text);
+      return tidy(text, doc);
     } else {
       return encodeElement(text);
     }
@@ -295,9 +333,10 @@ public final class XMLNode {
    * Tidy the text for inclusion as a comment description.
    *
    * @param text the HTML body text to tidy
+   * @param doc  The source java document the node belongs to.
    * @return the tidied HTML
    */
-  private static String tidy(String text) {
+  private static String tidy(String text, Doc doc) {
     Tidy tidy = new Tidy();
     tidy.setXmlOut(true);
     tidy.setEncloseText(false);
@@ -305,7 +344,13 @@ public final class XMLNode {
     tidy.setEscapeCdata(false);
     tidy.setIndentCdata(false);
     tidy.setTrimEmptyElements(false);
+// TODO    tidy.setNumEntities(?);
 
+    // Capture error stream
+    StringWriter err = new StringWriter();
+    tidy.setErrout(new PrintWriter(err, true));
+
+    if (doc == null) System.err.println("???: "+text);
     // Tidy wants a full HTML document...
     StringBuilder in = new StringBuilder();
     in.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"");
@@ -322,7 +367,10 @@ public final class XMLNode {
     // Get output
     int start = out.indexOf("<body>");
     int end = out.indexOf("</body>");
-    if (start != -1 && end != -1) return out.substring(start+6, end);
+    if (start != -1 && end != -1) {
+      printErrors(err, doc);
+      return out.substring(start+6, end);
+    }
 
     // Second chance try with XML
     tidy.setXmlTags(true);
@@ -332,7 +380,31 @@ public final class XMLNode {
     // Tidy
     w = new StringWriter();
     tidy.parse(new StringReader(in.toString()), w);
+
+    // Report errors
+    printErrors(err, doc);
     return w.toString();
   }
 
+  /**
+   * Prints the errors on the System error stream
+   *
+   * @param err The errors
+   * @param doc The source java document the node belongs to.
+   */
+  private static void printErrors(StringWriter err, Doc doc) {
+    String errors = err.toString();
+    if (errors.length() > 0) {
+      if (doc != null) {
+        String[] lines = errors.split("\\n");
+        System.err.println("Found "+lines.length+" errors in: "+doc.toString());
+        for (String line: lines) {
+          int from = line.indexOf("- Warning: ");
+          System.err.println(doc.toString()+": "+(from >= 0? line.substring(from+11) : line));
+        }
+      } else {
+        System.err.print(errors);
+      }
+    }
+  }
 }
