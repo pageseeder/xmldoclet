@@ -164,6 +164,7 @@ public final class XMLDoclet {
           }
         }
         XMLNode root = new XMLNode("root");
+        root.attribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
         root.child(meta);
         root.child(node);
         String fileName = name + ".xml";
