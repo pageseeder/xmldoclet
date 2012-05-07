@@ -397,10 +397,15 @@ public final class XMLNode {
     if (errors.length() > 0) {
       if (doc != null) {
         String[] lines = errors.split("\\n");
-        System.err.println("Found "+lines.length+" errors in: "+doc.toString());
+        System.err.println("Found "+lines.length+" formatting error(s) in: "+doc.toString());
         for (String line: lines) {
+          int shift = 11;
           int from = line.indexOf("- Warning: ");
-          System.err.println(doc.toString()+": "+(from >= 0? line.substring(from+11) : line));
+          if (from < 0) {
+            shift = 9;
+            from = line.indexOf("- Error: ");
+          }
+          System.err.println(doc.toString()+": "+(from >= 0? line.substring(from+shift) : line));
         }
       } else {
         System.err.print(errors);
