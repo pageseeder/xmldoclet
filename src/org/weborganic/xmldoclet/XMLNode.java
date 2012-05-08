@@ -222,7 +222,7 @@ public final class XMLNode {
       out.close();
 
     } catch (IOException ex) {
-      System.err.println("Could not create '" + dir + name + "'");
+      System.err.println("Could not create '" + dir +File.pathSeparator+ name + "'");
       ex.printStackTrace();
     }
   }
