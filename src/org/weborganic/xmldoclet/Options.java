@@ -175,37 +175,30 @@ public final class Options {
   }
 
   /**
-   * Filters the included set of classes by checking whether the given class matches the
-   * '-extends', '-implements' and '-annotated' options.
+   * Filters the included set of classes by checking whether the given class matches all of
+   * the specified '-extends', '-implements' and '-annotated' options.
    *
    * @param doc the class documentation.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
    */
   public boolean filter(ClassDoc doc) {
+    boolean included = true;
+
     // Extends
     if (this.extendsFilter != null) {
-      ClassDoc superclass = doc.superclass();
-      return superclass != null && this.extendsFilter.equals(superclass.toString());
+      included = included && filterExtends(doc, this.extendsFilter);
     }
     // Implements
     if (this.implementsFilter != null) {
-      ClassDoc[] interfaces = doc.interfaces();
-      for (ClassDoc i : interfaces) {
-        if (this.implementsFilter.equals(i.toString())) return true;
-      }
-      return false;
+      included = included && filterImplements(doc, this.implementsFilter);
     }
     // Annotation
     if (this.annotationFilter != null) {
-      AnnotationDesc[] annotations = doc.annotations();
-      for (AnnotationDesc i : annotations) {
-        if (this.annotationFilter.equals(i.annotationType().qualifiedName())) return true;
-      }
-      return false;
+      included = included && filterAnnotated(doc, this.annotationFilter);
     }
 
     // No filtering
-    return true;
+    return included;
   }
 
   @Override
@@ -430,4 +423,45 @@ public final class Options {
     return EMPTY_ARRAY;
   }
 
+  /**
+   * Filters the included set of classes by checking whether the given class matches the '-extends' option.
+   *
+   * @param doc  the class documentation.
+   * @param base the class to extend.
+   * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
+   */
+  private static boolean filterExtends(ClassDoc doc, String base) {
+    ClassDoc superclass = doc.superclass();
+    return superclass != null && base.equals(superclass.toString());
+  }
+
+  /**
+   * Filters the included set of classes by checking whether the given class matches the '-implements' option.
+   *
+   * @param doc   the class documentation.
+   * @param iface the interface to implement.
+   * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
+   */
+  private static boolean filterImplements(ClassDoc doc, String iface) {
+    ClassDoc[] interfaces = doc.interfaces();
+    for (ClassDoc i : interfaces) {
+      if (iface.equals(i.toString())) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Filters the included set of classes by checking whether the given class matches the '-annotated' option.
+   *
+   * @param doc        the class documentation.
+   * @param annotation the annotation to match.
+   * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
+   */
+  private static boolean filterAnnotated(ClassDoc doc, String annotation) {
+    AnnotationDesc[] annotations = doc.annotations();
+    for (AnnotationDesc i : annotations) {
+      if (annotation.equals(i.annotationType().qualifiedName())) return true;
+    }
+    return false;
+  }
 }
