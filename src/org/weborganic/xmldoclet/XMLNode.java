@@ -15,6 +15,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.w3c.tidy.Tidy;
+import org.w3c.tidy.TidyMessage;
+import org.w3c.tidy.TidyMessage.Level;
+import org.w3c.tidy.TidyMessageListener;
 
 import com.sun.javadoc.Doc;
 
@@ -39,6 +43,11 @@ public final class XMLNode {
    * Used in the toString method to provide a carriage-return + line-feed.
    */
   private static final String CRLF = System.getProperty("line.separator");
+
+  /**
+   * To print nowhere.
+   */
+  private static final PrintWriter VOID_WRITER = new PrintWriter(new VoidWriter());
 
   /**
    * The element name.
@@ -344,13 +353,10 @@ public final class XMLNode {
     tidy.setEscapeCdata(false);
     tidy.setIndentCdata(false);
     tidy.setTrimEmptyElements(false);
-// TODO    tidy.setNumEntities(?);
+    tidy.setDropProprietaryAttributes(false);
+    tidy.setMessageListener(new Listener(doc));
+    tidy.setErrout(VOID_WRITER);
 
-    // Capture error stream
-    StringWriter err = new StringWriter();
-    tidy.setErrout(new PrintWriter(err, true));
-
-    if (doc == null) System.err.println("???: "+text);
     // Tidy wants a full HTML document...
     StringBuilder in = new StringBuilder();
     in.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"");
@@ -368,7 +374,6 @@ public final class XMLNode {
     int start = out.indexOf("<body>");
     int end = out.indexOf("</body>");
     if (start != -1 && end != -1) {
-      printErrors(err, doc);
       return out.substring(start+6, end);
     }
 
@@ -382,34 +387,71 @@ public final class XMLNode {
     tidy.parse(new StringReader(in.toString()), w);
 
     // Report errors
-    printErrors(err, doc);
     return w.toString();
   }
 
   /**
-   * Prints the errors on the System error stream
-   *
-   * @param err The errors
-   * @param doc The source java document the node belongs to.
+   * A listener to capture errors thrown by tidy.
    */
-  private static void printErrors(StringWriter err, Doc doc) {
-    String errors = err.toString();
-    if (errors.length() > 0) {
-      if (doc != null) {
-        String[] lines = errors.split("\\n");
-        System.err.println("Found "+lines.length+" formatting error(s) in: "+doc.toString());
-        for (String line: lines) {
-          int shift = 11;
-          int from = line.indexOf("- Warning: ");
-          if (from < 0) {
-            shift = 9;
-            from = line.indexOf("- Error: ");
-          }
-          System.err.println(doc.toString()+": "+(from >= 0? line.substring(from+shift) : line));
-        }
-      } else {
-        System.err.print(errors);
+  private static class Listener implements TidyMessageListener  {
+
+    /**
+     * Error code returned by Tidy for unknown attributes.
+     */
+    private static final int UNKNOWN_ATTRIBUTE = 48;
+
+    /**
+     * The current document being processing.
+     */
+    private final Doc _doc;
+
+    public Listener(Doc doc) {
+      this._doc = doc;
+    }
+
+    @Override
+    public void messageReceived(TidyMessage message) {
+      int code = message.getErrorCode();
+      if (code != UNKNOWN_ATTRIBUTE) {
+        Level level = message.getLevel();
+        String prefix = "["+level+"]"+(level == Level.ERROR? "   " : " ");
+        System.err.println(prefix+this._doc.toString()+": "+message.getMessage());
       }
     }
+
+  };
+
+  /**
+   * Does nothing.
+   *
+   * @author Christophe Lauret
+   * @version 9 May 2012
+   */
+  private static class VoidWriter extends Writer {
+
+    @Override
+    public void write(char[] cbuf) {
+    }
+
+    @Override
+    public void write(int c) {
+    }
+
+    @Override
+    public void write(String str, int off, int len) {
+    }
+
+    @Override
+    public void write(char[] cbuf, int off, int len)  {
+    }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void close() {
+    }
+
   }
 }
