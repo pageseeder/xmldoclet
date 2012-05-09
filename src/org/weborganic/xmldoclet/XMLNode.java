@@ -85,17 +85,33 @@ public final class XMLNode {
   private StringBuilder _content;
 
   /**
+   * The line in the source.
+   */
+  private int _line;
+
+  /**
+   * Constructs the XMLNode.
+   *
+   * @param name The name of the element
+   * @param doc  The source java document the node belongs to.
+   */
+  public XMLNode(String name, Doc doc, int line) {
+    this._name = name;
+    this._doc = doc;
+    this._attributes = new HashMap<String, String>();
+    this._children = new ArrayList<XMLNode>();
+    this._content = new StringBuilder();
+    this._line = line;
+  }
+
+  /**
    * Constructs the XMLNode.
    *
    * @param name The name of the element
    * @param doc  The source java document the node belongs to.
    */
   public XMLNode(String name, Doc doc) {
-    this._name = name;
-    this._doc = doc;
-    this._attributes = new HashMap<String, String>();
-    this._children = new ArrayList<XMLNode>();
-    this._content = new StringBuilder();
+    this(name, doc, -1);
   }
 
   /**
@@ -266,7 +282,7 @@ public final class XMLNode {
     // This node has text
     if (this._content.length() > 0) {
       // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(encode(this._content.toString(), this._doc));
+      out.append(encode(this._content.toString(), this._doc, this._line));
     }
 
     // Serialise children
@@ -288,9 +304,9 @@ public final class XMLNode {
    * @param doc  The source java document the node belongs to.
    * @return The encoded string.
    */
-  private static String encode(String text, Doc doc) {
+  private static String encode(String text, Doc doc, int line) {
     if (text.indexOf('<') >= 0) {
-      return tidy(text, doc);
+      return tidy(text, doc, line);
     } else {
       return encodeElement(text);
     }
@@ -345,7 +361,7 @@ public final class XMLNode {
    * @param doc  The source java document the node belongs to.
    * @return the tidied HTML
    */
-  private static String tidy(String text, Doc doc) {
+  private static String tidy(String text, Doc doc, int line) {
     Tidy tidy = new Tidy();
     tidy.setXmlOut(true);
     tidy.setEncloseText(false);
@@ -354,7 +370,6 @@ public final class XMLNode {
     tidy.setIndentCdata(false);
     tidy.setTrimEmptyElements(false);
     tidy.setDropProprietaryAttributes(false);
-    tidy.setMessageListener(new Listener(doc));
     tidy.setErrout(VOID_WRITER);
 
     // Tidy wants a full HTML document...
@@ -364,6 +379,13 @@ public final class XMLNode {
     in.append("<html><head><title>Remove</title></head><body>");
     in.append(text);
     in.append("</body></html>");
+
+    // Count new lines
+    int baseline = line;
+    if (line != -1) {
+      baseline = line - countLines(doc.getRawCommentText()) -2;
+    }
+    tidy.setMessageListener(new Listener(doc, baseline));
 
     // Tidy
     StringWriter w = new StringWriter();
@@ -390,6 +412,16 @@ public final class XMLNode {
     return w.toString();
   }
 
+  private static int countLines(String text) {
+    int lineCount = 0;
+    int i = text.indexOf('\n');
+    while (i != -1) {
+      lineCount++;
+      i = text.indexOf('\n', i+1);
+    }
+    return lineCount;
+  }
+
   /**
    * A listener to capture errors thrown by tidy.
    */
@@ -405,17 +437,30 @@ public final class XMLNode {
      */
     private final Doc _doc;
 
-    public Listener(Doc doc) {
+    /**
+     * The line where the source that is being tidied starts.
+     */
+    private final int _baseline;
+
+    /**
+     * Creates a new listener for tidy
+     *
+     * @param doc      The source java doc
+     * @param baseline The line where the source that is being tidied starts.
+     */
+    public Listener(Doc doc, int baseline) {
       this._doc = doc;
+      this._baseline = baseline;
     }
 
     @Override
     public void messageReceived(TidyMessage message) {
       int code = message.getErrorCode();
+      int line = this._baseline >= 0? this._baseline + message.getLine() : -1;
       if (code != UNKNOWN_ATTRIBUTE) {
         Level level = message.getLevel();
         String prefix = "["+level+"]"+(level == Level.ERROR? "   " : " ");
-        System.err.println(prefix+this._doc.toString()+": "+message.getMessage());
+        System.err.println(prefix+this._doc.toString()+":" +(line != -1? "L"+line+" " : " ")+message.getMessage());
       }
     }
 

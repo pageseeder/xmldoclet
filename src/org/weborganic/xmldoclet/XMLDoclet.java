@@ -658,7 +658,7 @@ public final class XMLDoclet {
    */
   private static XMLNode toComment(Doc doc) {
     if (doc.commentText() == null || doc.commentText().length() == 0) return null;
-    XMLNode node = new XMLNode("comment");
+    XMLNode node = new XMLNode("comment", doc, doc.position().line());
     StringBuilder comment = new StringBuilder();
 
     // Analyse each token and produce comment node
