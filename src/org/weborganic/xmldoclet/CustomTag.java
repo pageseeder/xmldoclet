@@ -21,21 +21,25 @@ public final class CustomTag implements Taglet {
    */
   private String _title;
 
-  /**
-   * Whether the tag appears inline or not.
-   */
+  /** Whether the tag appears inline or not. */
   private boolean _inline;
 
+  /** Whether the tag can appear in constructor. */
   private boolean _inConstructor = true;
 
+  /** Whether the tag can appear in field. */
   private boolean _inField = true;
 
+  /** Whether the tag can appear in method. */
   private boolean _inMethod = true;
 
+  /** Whether the tag can appear in overview. */
   private boolean _inOverview = true;
 
+  /** Whether the tag can appear in package. */
   private boolean _inPackage = true;
 
+  /** Whether the tag can appear in type. */
   private boolean _inType = true;
 
   /**

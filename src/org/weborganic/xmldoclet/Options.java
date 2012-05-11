@@ -320,7 +320,7 @@ public final class Options {
       for (String def : tags) {
         int colon = def.indexOf(':');
         String name = colon < 0? def : def.substring(0, colon);
-        CustomTag tag = new CustomTag(name, true);
+        CustomTag tag = new CustomTag(name, false);
         if (colon >= 0) {
           // scope
           String scope = def.substring(colon+1);
@@ -332,7 +332,7 @@ public final class Options {
           }
           tag.setScope(scope);
         }
-        o.taglets.put('@'+name, new CustomTag(name, true));
+        o.taglets.put(name, new CustomTag(name, true));
         reporter.printNotice("Using Tag "+name);
       }
     }
