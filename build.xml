@@ -26,9 +26,7 @@
   <loadfile property="version" srcfile="version.txt" description="Version to build"/>
 
   <!-- Only load Ivy properties if not defined globally -->
-  <target name="-load-ivy-properties" unless="ivy.settings.url">
-    <loadproperties srcFile="ivy.properties"/>
-  </target>
+  <loadproperties srcFile="ivy.properties"/>
 
   <!-- initialise -->
   <target name="init">
@@ -82,11 +80,11 @@
   <!-- generate the documentation -->
   <target name="javadoc" depends="compile" description="generate the java documentation">
     <ivy:buildnumber organisation="weborganic" module="${name.short}" resolver="shared" />
-    <mkdir dir="${dir.doc}"/>
+    <mkdir dir="${dir.doc}/${ivy.revision}/"/>
     <path id="required.lib">
       <fileset dir="${dir.lib}" includes="*.jar"/>
     </path>
-    <javadoc destdir="${dir.doc}" access="public" 
+    <javadoc destdir="${dir.doc}/${ivy.revision}/" access="public" 
                                   use="true" 
                                   notree="false" 
                                   nonavbar="false" 
@@ -97,12 +95,12 @@
                                   nodeprecated="false" 
                                   sourcepath="${dir.src}"
                                   stylesheetfile="${dir.resource}/javadoc.css"
-                                  doctitle="${name.display} ${version} API">
+                                  doctitle="${name.display} ${ivy.revision} API">
       <classpath>
         <path refid="required.lib"/>
       </classpath>
       <link href="http://docs.oracle.com/javase/6/docs/api/" />
-      <link href="http://docs.oracle.com/javase/6/docs/jdk/api/javadoc/doclet/" />
+      <link href="http://docs.oracle.com/javase/6/docs/jdk/api/javadoc/doclet/"/>
     </javadoc>
   </target>
 
@@ -129,8 +127,8 @@
         <attribute name="Main-Class"             value="${package.main}"/>
         <attribute name="Implementation-Title"   value="${name.display}"/>
         <attribute name="Implementation-Version" value="${publish.revision}"/>
-        <attribute name="Implementation-Vendor"  value="Weborganic Pty Ltd (Australia)"/>
-        <attribute name="Implementation-URL"     value="http://www.weborganic.org/code/oauth/"/>
+        <attribute name="Implementation-Vendor"  value="Allette (Australia)"/>
+        <attribute name="Implementation-URL"     value="http://pageseeder.org/xmldoclet/"/>
       </manifest>
     </jar>
     <!-- Publish to the local Ivy repository  -->
