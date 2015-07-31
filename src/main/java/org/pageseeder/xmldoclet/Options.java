@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.weborganic.xmldoclet;
+package org.pageseeder.xmldoclet;
 
 import java.io.File;
 import java.lang.reflect.Method;
