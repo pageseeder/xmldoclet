@@ -8,7 +8,7 @@ the notations introduced with Java 5.
 
 How to use:
 ```
-javadoc -doclet org.weborganic.xmldoclet.XMLDoclet \
+javadoc -doclet org.pageseeder.xmldoclet.XMLDoclet \
     -docletpath lib/wo-xmldoclet-0.8.11.jar:lib/jtidy-r938.jar \
     -sourcepath <pathlist> [packagenames] -d <directory>
 ```
