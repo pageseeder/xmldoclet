@@ -1,9 +1,17 @@
 /*
- * This file is part of the Weborganic XMLDoclet library.
+ * Copyright 2010-2015 Allette Systems (Australia)
+ * http://www.allette.com.au
  *
- * For licensing information please see the file license.txt included in the release.
- * A copy of this licence can also be found at
- *   http://www.opensource.org/licenses/artistic-license-2.0.php
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.weborganic.xmldoclet;
 
@@ -284,7 +292,9 @@ public final class Options {
       if (name != null && !o.multipleFiles) {
         o.filename = name;
         reporter.printNotice("Using file name: "+name);
-      } else reporter.printWarning("'-filename' option ignored");
+      } else {
+        reporter.printWarning("'-filename' option ignored");
+      }
     }
 
     // Extends
@@ -293,7 +303,9 @@ public final class Options {
       if (superclass != null) {
         o.extendsFilter = superclass;
         reporter.printNotice("Filtering classes extending: "+superclass);
-      } else reporter.printWarning("'-extends' option ignored - superclass not specified");
+      } else {
+        reporter.printWarning("'-extends' option ignored - superclass not specified");
+      }
     }
 
     // Annotated
@@ -302,7 +314,9 @@ public final class Options {
       if (annotation != null) {
         o.annotationFilter = annotation;
         reporter.printNotice("Filtering classes annotated: "+annotation);
-      } else reporter.printWarning("'-annotated' option ignored - annotation not specified");
+      } else {
+        reporter.printWarning("'-annotated' option ignored - annotation not specified");
+      }
     }
 
     // Implements
@@ -311,7 +325,9 @@ public final class Options {
       if (iface != null) {
         o.implementsFilter = iface;
         reporter.printNotice("Filtering classes implementing: "+iface);
-      } else reporter.printWarning("'-implements' option ignored - interface not specified");
+      } else {
+        reporter.printWarning("'-implements' option ignored - interface not specified");
+      }
     }
 
     // Custom Tags
@@ -352,7 +368,9 @@ public final class Options {
             reporter.printError("'-taglet' option reported error - :"+ex.getMessage());
           }
         }
-      } else reporter.printWarning("'-taglet' option ignored - classes not specified");
+      } else {
+        reporter.printWarning("'-taglet' option ignored - classes not specified");
+      }
     }
 
     // If we reached this point everything is OK
@@ -386,7 +404,9 @@ public final class Options {
     List<String> values = new ArrayList<String>();
     for (String[] option : options) {
       if (option[0].equals(name)) {
-        if (option.length > 1) values.add(option[1]);
+        if (option.length > 1) {
+          values.add(option[1]);
+        }
       }
     }
     return values;

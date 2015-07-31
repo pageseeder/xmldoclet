@@ -1,9 +1,17 @@
 /*
- * This file is part of the Weborganic XMLDoclet library.
+ * Copyright 2010-2015 Allette Systems (Australia)
+ * http://www.allette.com.au
  *
- * For licensing information please see the file license.txt included in the release.
- * A copy of this licence can also be found at
- *   http://www.opensource.org/licenses/artistic-license-2.0.php
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.weborganic.xmldoclet;
 
@@ -130,8 +138,9 @@ public final class XMLNode {
    * @param value the value for the attribute
    */
   public XMLNode attribute(String name, String value) {
-    if (value != null)
+    if (value != null) {
       this._attributes.put(name, value);
+    }
     return this;
   }
 
@@ -181,7 +190,9 @@ public final class XMLNode {
    */
   private void setDoc(Doc doc) {
     if (doc == null) return;
-    if (this._doc == null) this._doc = doc;
+    if (this._doc == null) {
+      this._doc = doc;
+    }
     for (XMLNode child : this._children) {
       child.setDoc(doc);
     }
@@ -194,8 +205,9 @@ public final class XMLNode {
    * @return this node for chaining.
    */
   public XMLNode text(String text) {
-    if (text != null)
+    if (text != null) {
       this._content.append(text);
+    }
     return this;
   }
 
@@ -277,7 +289,9 @@ public final class XMLNode {
 
     // Close open tag
     out.append(">");
-    if (!this._children.isEmpty()) out.append(CRLF);
+    if (!this._children.isEmpty()) {
+      out.append(CRLF);
+    }
 
     // This node has text
     if (this._content.length() > 0) {
@@ -291,7 +305,9 @@ public final class XMLNode {
     }
 
     // Close element
-    if (!this._children.isEmpty()) out.append(tabs);
+    if (!this._children.isEmpty()) {
+      out.append(tabs);
+    }
     out.append("</" + this._namespacePrefix + this._name + ">" + CRLF + ("class".equalsIgnoreCase(this._name)? CRLF : ""));
 
     return out.toString();
@@ -305,11 +321,8 @@ public final class XMLNode {
    * @return The encoded string.
    */
   private static String encode(String text, Doc doc, int line) {
-    if (text.indexOf('<') >= 0) {
-      return tidy(text, doc, line);
-    } else {
-      return encodeElement(text);
-    }
+    if (text.indexOf('<') >= 0) return tidy(text, doc, line);
+    else return encodeElement(text);
   }
 
   /**
@@ -395,9 +408,7 @@ public final class XMLNode {
     // Get output
     int start = out.indexOf("<body>");
     int end = out.indexOf("</body>");
-    if (start != -1 && end != -1) {
-      return out.substring(start+6, end);
-    }
+    if (start != -1 && end != -1) return out.substring(start+6, end);
 
     // Second chance try with XML
     tidy.setXmlTags(true);

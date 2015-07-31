@@ -1,9 +1,17 @@
 /*
- * This file is part of the Weborganic XMLDoclet library.
+ * Copyright 2010-2015 Allette Systems (Australia)
+ * http://www.allette.com.au
  *
- * For licensing information please see the file license.txt included in the release.
- * A copy of this licence can also be found at
- *   http://www.opensource.org/licenses/artistic-license-2.0.php
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.weborganic.xmldoclet;
 
@@ -176,7 +184,9 @@ public final class XMLDoclet {
       root.child(meta);
       for (XMLNode node : nodes) {
         String name = node.getAttribute("name");
-        if (options.useSubFolders()) name = name.replace('.', '/');
+        if (options.useSubFolders()) {
+          name = name.replace('.', '/');
+        }
         XMLNode ref = new XMLNode(node.getName());
         ref.attribute("xlink:type", "simple");
         ref.attribute("xlink:href", name + ".xml");
@@ -322,11 +332,13 @@ public final class XMLDoclet {
     node.attribute("type", field.type().typeName());
     node.attribute("fulltype", field.type().toString());
 
-    if (field.constantValue() != null && field.constantValue().toString().length() > 0)
+    if (field.constantValue() != null && field.constantValue().toString().length() > 0) {
       node.attribute("const", field.constantValue().toString());
+    }
 
-    if (field.constantValueExpression() != null && field.constantValueExpression().length() > 0)
+    if (field.constantValueExpression() != null && field.constantValueExpression().length() > 0) {
       node.attribute("constexpr", field.constantValueExpression());
+    }
 
     node.attribute("static", field.isStatic());
     node.attribute("final", field.isFinal());
@@ -549,7 +561,9 @@ public final class XMLDoclet {
     List<XMLNode> nodes = new ArrayList<XMLNode>(tags.length);
     for (SeeTag tag : tags) {
       XMLNode n = toSeeNode(tag);
-      if (n != null) nodes.add(n);
+      if (n != null) {
+        nodes.add(n);
+      }
     }
 
     // Add the node to the host
@@ -664,8 +678,11 @@ public final class XMLDoclet {
     // Analyse each token and produce comment node
     for (Tag t : doc.inlineTags()) {
       Taglet taglet = options.getTagletForName(t.name());
-      if (taglet != null) comment.append(taglet.toString(t));
-      else comment.append(t.text());
+      if (taglet != null) {
+        comment.append(taglet.toString(t));
+      } else {
+        comment.append(t.text());
+      }
     }
 
     return node.text(comment.toString());
@@ -684,8 +701,11 @@ public final class XMLDoclet {
     // Analyse each token and produce comment node
     for (Tag t : tag.inlineTags()) {
       Taglet taglet = options.getTagletForName(t.name());
-      if (taglet != null) comment.append(taglet.toString(t));
-      else comment.append(t.text());
+      if (taglet != null) {
+        comment.append(taglet.toString(t));
+      } else {
+        comment.append(t.text());
+      }
     }
 
     return comment.toString();
@@ -771,9 +791,7 @@ public final class XMLDoclet {
    */
   private static ThrowsTag find(ThrowsTag[] tags, String name){
     for (ThrowsTag tag : tags) {
-      if (tag.exceptionName().equalsIgnoreCase(name)) {
-        return tag;
-      }
+      if (tag.exceptionName().equalsIgnoreCase(name)) return tag;
     }
     return null;
   }
@@ -785,9 +803,7 @@ public final class XMLDoclet {
    */
   private static ParamTag find(ParamTag[] tags, String name){
     for (ParamTag tag : tags) {
-      if (tag.parameterName().equalsIgnoreCase(name)) {
-        return tag;
-      }
+      if (tag.parameterName().equalsIgnoreCase(name)) return tag;
     }
     return null;
   }
@@ -806,9 +822,7 @@ public final class XMLDoclet {
     if (o instanceof Short)   return "short";
     if (o instanceof Float)   return "float";
     if (o instanceof Double)  return "double";
-    if (o instanceof FieldDoc) {
-      return ((FieldDoc)o).containingClass().qualifiedName();
-    }
+    if (o instanceof FieldDoc) return ((FieldDoc)o).containingClass().qualifiedName();
     return o.getClass().getName();
   }
 

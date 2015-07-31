@@ -1,0 +1,60 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.pageseeder.xmldoclet</groupId>
+  <artifactId>wo-xmldoclet</artifactId>
+  <version>0.9.0</version>
+  <name>XML Doclet</name>
+  <description>Doclet for the javadoc tool to generate Java API documentation as XML</description>
+  
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  
+   <developers>
+    <developer>
+      <name>Christophe Lauret</name>
+      <email>clauret@weborganic.com</email>
+      <organization>Allette Systems</organization>
+      <organizationUrl>http://www.allette.com.au</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git@github.com:pageseeder/wo-xmldoclet.git</connection>
+    <developerConnection>scm:git:git@github.com:pageseeder/wo-xmldoclet.git</developerConnection>
+    <url>git@github.com:pageseeder/wo-xmldoclet.git</url>
+  </scm>
+
+  <organization>
+    <name>Allette Systems</name>
+    <url>http://www.allette.com.au</url>
+  </organization>
+
+  <properties>
+     <maven.compiler.source>1.7</maven.compiler.source>
+     <maven.compiler.target>1.7</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+  
+    <dependency>
+      <groupId>net.sf.jtidy</groupId>
+      <artifactId>jtidy</artifactId>
+      <version>r938</version>
+    </dependency>
+
+    <dependency>
+      <groupId>jdk.tools</groupId>
+      <artifactId>jdk.tools</artifactId>
+      <version>1.7</version>
+      <scope>system</scope>
+      <!-- FIXME: use env variable or document how to do this  -->
+      <systemPath>C:\Program Files\Java\jdk1.7.0_67\lib\tools.jar</systemPath>
+    </dependency>
+
+  </dependencies>
+
+</project>
