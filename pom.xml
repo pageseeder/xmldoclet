@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.pageseeder.xmldoclet</groupId>
-  <artifactId>wo-xmldoclet</artifactId>
+  <artifactId>pso-xmldoclet</artifactId>
   <version>0.9.0</version>
   <name>XML Doclet</name>
   <description>Doclet for the javadoc tool to generate Java API documentation as XML</description>
@@ -23,9 +23,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:pageseeder/wo-xmldoclet.git</connection>
-    <developerConnection>scm:git:git@github.com:pageseeder/wo-xmldoclet.git</developerConnection>
-    <url>git@github.com:pageseeder/wo-xmldoclet.git</url>
+    <connection>scm:git:git@github.com:pageseeder/xmldoclet.git</connection>
+    <developerConnection>scm:git:git@github.com:pageseeder/xmldoclet.git</developerConnection>
+    <url>git@github.com:pageseeder/xmldoclet.git</url>
   </scm>
 
   <organization>
