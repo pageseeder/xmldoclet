@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.pageseeder.xmldoclet</groupId>
   <artifactId>pso-xmldoclet</artifactId>
-  <version>0.9.0-SNAPSHOT</version>
+  <version>0.9.0</version>
   <name>XML Doclet</name>
   <description>Doclet for the javadoc tool to generate Java API documentation as XML</description>
   
@@ -26,6 +26,7 @@
     <connection>scm:git:git@github.com:pageseeder/xmldoclet.git</connection>
     <developerConnection>scm:git:git@github.com:pageseeder/xmldoclet.git</developerConnection>
     <url>git@github.com:pageseeder/xmldoclet.git</url>
+    <tag>v0.9.0</tag>
   </scm>
 
   <organization>
@@ -40,7 +41,7 @@
   </properties>
 
   <dependencies>
-  
+
     <dependency>
       <groupId>net.sf.jtidy</groupId>
       <artifactId>jtidy</artifactId>
