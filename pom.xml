@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.pageseeder.xmldoclet</groupId>
   <artifactId>pso-xmldoclet</artifactId>
-  <version>0.9.1-SNAPSHOT</version>
+  <version>0.9.1</version>
   <name>XML Doclet</name>
   <description>Doclet for the javadoc tool to generate Java API documentation as XML</description>
   
@@ -22,12 +22,6 @@
     </developer>
   </developers>
 
-  <scm>
-    <connection>scm:git:git@github.com:pageseeder/xmldoclet.git</connection>
-    <developerConnection>scm:git:git@github.com:pageseeder/xmldoclet.git</developerConnection>
-    <url>git@github.com:pageseeder/xmldoclet.git</url>
-  </scm>
-
   <organization>
     <name>Allette Systems</name>
     <url>http://www.allette.com.au</url>
@@ -37,7 +31,65 @@
     <java.version>1.7</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <bintray.repo>maven</bintray.repo>
+    <bintray.package>xmldoclet</bintray.package>
   </properties>
+
+  <scm>
+    <connection>scm:git:git@github.com:pageseeder/xmldoclet.git</connection>
+    <developerConnection>scm:git:git@github.com:pageseeder/xmldoclet.git</developerConnection>
+    <url>git@github.com:pageseeder/xmldoclet.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>bintray</id>
+      <url>https://api.bintray.com/maven/pageseeder/${bintray.repo}/${bintray.package}/;publish=1</url>
+    </repository>
+  </distributionManagement>
+
+  <profiles>
+    <profile>
+      <id>bintray</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.4</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>default-tools.jar</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Sun Microsystems Inc.</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.6.0</version>
+          <scope>system</scope>
+          <systemPath>${jdk.home}/lib/tools.jar</systemPath>
+        </dependency>
+      </dependencies>
+    </profile>
+
+  </profiles>
 
   <dependencies>
 
@@ -45,15 +97,6 @@
       <groupId>net.sf.jtidy</groupId>
       <artifactId>jtidy</artifactId>
       <version>r938</version>
-    </dependency>
-
-    <dependency>
-      <groupId>jdk.tools</groupId>
-      <artifactId>jdk.tools</artifactId>
-      <version>1.7</version>
-      <scope>system</scope>
-      <!-- FIXME: use env variable or document how to do this  -->
-      <systemPath>C:\Program Files\Java\jdk1.7.0_67\lib\tools.jar</systemPath>
     </dependency>
 
   </dependencies>
