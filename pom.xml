@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.pageseeder.xmldoclet</groupId>
   <artifactId>pso-xmldoclet</artifactId>
-  <version>0.9.1</version>
+  <version>0.9.2-SNAPSHOT</version>
   <name>XML Doclet</name>
   <description>Doclet for the javadoc tool to generate Java API documentation as XML</description>
   
