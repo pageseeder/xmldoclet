@@ -19,11 +19,10 @@ To resolve the tools jar dependency update your Maven settings to inlcude
 the `jdk.home` variable. for example:
 
 ```
-    <profile>
-      <id>default-tools.jar</id>
-      <properties>
-        <jdk.home>C:/Program Files/Java/jdk1.8.0_60</jdk.home>
-      </properties>
-    </profile>
-  </profiles>
+ <profile>
+   <id>default-tools.jar</id>
+   <properties>
+     <jdk.home>C:/Program Files/Java/jdk1.8.0_60</jdk.home>
+   </properties>
+ </profile>
 ```
