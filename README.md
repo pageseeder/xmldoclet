@@ -1,3 +1,5 @@
+[ ![Download](https://api.bintray.com/packages/pageseeder/maven/xmldoclet/images/download.svg) ](https://bintray.com/pageseeder/maven/xmldoclet/_latestVersion)
+
 # XML Doclet
 
 This library defines a Doclet for use with the Javadoc tool in order to
