@@ -15,21 +15,27 @@
  */
 package org.pageseeder.xmldoclet;
 
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet;
+
+import javax.lang.model.element.Element;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A custom tag for tags specified using the -tag option.
  *
  * @author Christophe Lauret
- * @version 2 May 2012
+ * @version 1.0
  */
 public final class CustomTag implements Taglet {
 
   /**
    * The name of the tag.
    */
-  private String _name;
+  private final String _name;
 
   /**
    * The title/header/description for the tag.
@@ -37,25 +43,9 @@ public final class CustomTag implements Taglet {
   private String _title;
 
   /** Whether the tag appears inline or not. */
-  private boolean _inline;
+  private final boolean _inline;
 
-  /** Whether the tag can appear in constructor. */
-  private boolean _inConstructor = true;
-
-  /** Whether the tag can appear in field. */
-  private boolean _inField = true;
-
-  /** Whether the tag can appear in method. */
-  private boolean _inMethod = true;
-
-  /** Whether the tag can appear in overview. */
-  private boolean _inOverview = true;
-
-  /** Whether the tag can appear in package. */
-  private boolean _inPackage = true;
-
-  /** Whether the tag can appear in type. */
-  private boolean _inType = true;
+  private EnumSet<Location> allowedLocations = EnumSet.allOf(Location.class);
 
   /**
    * Creates a custom tag.
@@ -95,42 +85,23 @@ public final class CustomTag implements Taglet {
    * </pre>
    */
   public void setScope(String scope) {
-    this._inConstructor = scope.indexOf('a') >= 0 || scope.indexOf('c') >= 0;
-    this._inField       = scope.indexOf('a') >= 0 || scope.indexOf('f') >= 0;
-    this._inMethod      = scope.indexOf('a') >= 0 || scope.indexOf('m') >= 0;
-    this._inOverview    = scope.indexOf('a') >= 0 || scope.indexOf('o') >= 0;
-    this._inPackage     = scope.indexOf('a') >= 0 || scope.indexOf('p') >= 0;
-    this._inType        = scope.indexOf('a') >= 0 || scope.indexOf('t') >= 0;
+    if (scope.indexOf('a') >= 0) {
+      this.allowedLocations = EnumSet.allOf(Location.class);
+      return;
+    }
+    HashSet<Location> locations = new HashSet<>();
+    if (scope.indexOf('c') >= 0) locations.add(Location.CONSTRUCTOR);
+    if (scope.indexOf('f') >= 0) locations.add(Location.FIELD);
+    if (scope.indexOf('m') >= 0) locations.add(Location.METHOD);
+    if (scope.indexOf('o') >= 0) locations.add(Location.OVERVIEW);
+    if (scope.indexOf('p') >= 0) locations.add(Location.PACKAGE);
+    if (scope.indexOf('t') >= 0) locations.add(Location.TYPE);
+    this.allowedLocations = EnumSet.copyOf(locations);
   }
 
   @Override
-  public boolean inConstructor() {
-    return this._inConstructor;
-  }
-
-  @Override
-  public boolean inField() {
-    return this._inField;
-  }
-
-  @Override
-  public boolean inMethod() {
-    return this._inMethod;
-  }
-
-  @Override
-  public boolean inOverview() {
-    return this._inOverview;
-  }
-
-  @Override
-  public boolean inPackage() {
-    return this._inPackage;
-  }
-
-  @Override
-  public boolean inType() {
-    return this._inType;
+  public Set<Location> getAllowedLocations() {
+    return this.allowedLocations;
   }
 
   @Override
@@ -159,8 +130,7 @@ public final class CustomTag implements Taglet {
     return this._inline;
   }
 
-  @Override
-  public String toString(Tag tag) {
+  public String toString(DocTree tag, Element el) {
     String element = this._inline? "span" : "div";
     StringBuilder out = new StringBuilder();
     out.append('<').append(element);
@@ -169,16 +139,16 @@ public final class CustomTag implements Taglet {
       out.append(" title=\"").append(this._title).append('"');
     }
     out.append('>');
-    out.append(tag.text());
+// FIXME   out.append(tag.text());
+    out.append("TODO");
     out.append("</").append(element).append('>');
     return out.toString();
   }
 
-  @Override
-  public String toString(Tag[] tags) {
+  public String toString(List<? extends DocTree> tags, Element element) {
     StringBuilder out = new StringBuilder();
-    for (Tag t : tags) {
-      out.append(toString(t));
+    for (DocTree t : tags) {
+      out.append(toString(t, element));
     }
     return out.toString();
   }

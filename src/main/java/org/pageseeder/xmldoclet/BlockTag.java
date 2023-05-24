@@ -15,183 +15,54 @@
  */
 package org.pageseeder.xmldoclet;
 
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet;
+
+import javax.lang.model.element.Element;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A collection of taglets to support the standard javadoc tags.
  *
  * @author Christophe Lauret
- * @version 3 April 2010
+ * @version 1.0
  */
 public enum BlockTag implements Taglet {
 
   /**
    * Taglet for the <code>@author</code> tag.
    */
-  AUTHOR("author", false) {
+  AUTHOR("author") {
 
     @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("author").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return "<author>"+tag.text()+"</author>";
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
+    public String toString(DocTree tag, Element element) {
+// FIXME      return "<author>"+tag.text()+"</author>";
+      return "<author>TODO</author>";
     }
 
   },
 
-  DEPRECATED("deprecated", false){
+  DEPRECATED("deprecated"),
+
+  SERIAL("serial"),
+
+  SERIALDATA("serialData"),
+
+  SERIALFIELD("serialField"),
+
+  SINCE("since"),
+
+  VERSION("version"){
 
     @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("deprecated").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return tag.text();
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
-    }
-
-  },
-
-  SERIAL("serial", false){
-
-    @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("serial").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return tag.text();
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
-    }
-
-  },
-
-  SERIALDATA("serialData", false){
-
-    @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("serialData").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return tag.text();
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
-    }
-
-  },
-
-  SERIALFIELD("serialField", false){
-
-    @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("serialField").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return tag.text();
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
-    }
-
-  },
-
-  SINCE("since", false){
-
-    @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("since").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return tag.text();
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
-    }
-
-  },
-
-
-  VERSION("version", false){
-
-    @Override
-    public XMLNode toXMLNode(Tag tag) {
-      return new XMLNode("version").text(tag.text());
-    }
-
-    @Override
-    public String toString(Tag tag) {
-      return "<version>"+tag.text()+"</version>";
-    }
-
-    @Override
-    public String toString(Tag[] tags) {
-      StringBuilder out = new StringBuilder();
-      for (Tag t : tags) {
-        out.append(toString(t));
-      }
-      return out.toString();
+    public String toString(DocTree tag, Element element) {
+// FIXME     return "<version>"+tag.text()+"</version>";
+      return "<version>TODO</version>";
     }
 
   };
-
-  // enum class methods ===============================================================================================
 
   /**
    * The name of the tag
@@ -202,16 +73,35 @@ public enum BlockTag implements Taglet {
    * Creates a new tag.
    *
    * @param name   The name of the tag.
-   * @param inline <code>true</code> for an inline tag; <code>false</code> otherwise.
    */
-  BlockTag(String name, boolean inline) {
+  BlockTag(String name) {
     this._name = name;
   }
 
+  public XMLNode toXMLNode(DocTree tag, Element element) {
+// FIXME    return new XMLNode(this._name).text(tag.text());
+    return new XMLNode(this._name).text("TODO");
+  }
+
   /**
-   * Returns the XML node corresponding to this taglet.
+   * @return the set of locations in which a tag may be used
    */
-  public abstract XMLNode toXMLNode(Tag tag);
+  public Set<Location> getAllowedLocations() {
+    return EnumSet.allOf(Location.class);
+  }
+
+  public String toString(DocTree tag, Element element) {
+//    return tag.text();
+    return "TODO";
+  }
+
+  public String toString(List<? extends DocTree> tags, Element element) {
+    StringBuilder out = new StringBuilder();
+    for (DocTree tag : tags) {
+      out.append(toString(tag, element));
+    }
+    return out.toString();
+  }
 
   @Override
   public String getName() {
@@ -221,36 +111,6 @@ public enum BlockTag implements Taglet {
   @Override
   public boolean isInlineTag() {
     return false;
-  }
-
-  @Override
-  public boolean inConstructor() {
-    return true;
-  }
-
-  @Override
-  public boolean inField(){
-    return true;
-  }
-
-  @Override
-  public boolean inMethod() {
-    return true;
-  }
-
-  @Override
-  public boolean inOverview() {
-    return true;
-  }
-
-  @Override
-  public boolean inPackage() {
-    return true;
-  }
-
-  @Override
-  public boolean inType() {
-    return true;
   }
 
 }

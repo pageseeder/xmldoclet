@@ -16,17 +16,18 @@
 package org.pageseeder.xmldoclet;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
-import com.sun.javadoc.AnnotationDesc;
-import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.DocErrorReporter;
-import com.sun.tools.doclets.Taglet;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
+
+import jdk.javadoc.doclet.Doclet;
+import jdk.javadoc.doclet.Reporter;
+import jdk.javadoc.doclet.Taglet;
+import org.pageseeder.xmldoclet.options.*;
 
 /**
  * Container for the options for the XML Doclet.
@@ -45,7 +46,7 @@ public final class Options {
   /**
    * The default encoding for the output
    */
-  private static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+  private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * The default filename for the output.
@@ -55,21 +56,21 @@ public final class Options {
   /**
    * Determines whether the output is a single file or multiple files.
    *
-   * Populated from the command line via the "-multiple" flag.
+   * <p>Populated from the command line via the "-multiple" flag.
    */
   private boolean multipleFiles = false;
 
   /**
    * Determines whether files are organised as subfolders or all in the same folder.
    *
-   * Populated from the command line via the "-subfolders" flag.
+   * <p>Populated from the command line via the "-subfolders" flag.
    */
   private boolean subFolders = false;
 
   /**
    * Determines the directory where output is placed.
    *
-   * Populated from the command line via the "-d [directory]" flag.
+   * <p>Populated from the command line via the "-d [directory]" flag.
    */
   private File directory;
 
@@ -96,12 +97,12 @@ public final class Options {
   /**
    * The taglets loaded by this doclet.
    */
-  private Map<String, Taglet> taglets = new HashMap<String, Taglet>();
+  private final Map<String, Taglet> taglets = new HashMap<>();
 
   /**
    * Name of the file - used for single output only.
    *
-   * Populated from the command line via the "-filename [file]" flag.
+   * <p>Populated from the command line via the "-filename [file]" flag.
    */
   private String filename = DEFAULT_FILENAME;
 
@@ -189,12 +190,12 @@ public final class Options {
    * @param doc the class documentation.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
    */
-  public boolean filter(ClassDoc doc) {
+  public boolean filter(TypeElement doc) {
     boolean included = true;
 
     // Extends
     if (this.extendsFilter != null) {
-      included = included && filterExtends(doc, this.extendsFilter);
+      included = filterExtends(doc, this.extendsFilter);
     }
     // Implements
     if (this.implementsFilter != null) {
@@ -214,233 +215,57 @@ public final class Options {
     return super.toString();
   }
 
+  public void setMultipleFiles(boolean multipleFiles) {
+    this.multipleFiles = multipleFiles;
+  }
+
+  public void setAnnotationFilter(String annotationFilter) {
+    this.annotationFilter = annotationFilter;
+  }
+
+  public void setDirectory(File directory) {
+    this.directory = directory;
+  }
+
+  public void setEncoding(Charset encoding) {
+    this.encoding = encoding;
+  }
+
+  public void setExtendsFilter(String extendsFilter) {
+    this.extendsFilter = extendsFilter;
+  }
+
+  public void setFilename(String filename) {
+    this.filename = filename;
+  }
+
+  public void setImplementsFilter(String implementsFilter) {
+    this.implementsFilter = implementsFilter;
+  }
+
+  public void setSubFolders(boolean subFolders) {
+    this.subFolders = subFolders;
+  }
+
+  public String getExtendsFilter() {
+    return extendsFilter;
+  }
+
   // static methods for use by Doclet =============================================================
 
-  /**
-   * A JavaDoc option parsing handler.
-   *
-   * <p>This one returns the number of arguments required for the given option.
-   *
-   * @see com.sun.javadoc.Doclet#optionLength(String)
-   *
-   * @param option The name of the option.
-   *
-   * @return The number of arguments for that option.
-   */
-  public static int getLength(String option) {
-    // possibly specified by javadoc understood by this doclet
-    if ("-d".equals(option)) return 2;
-    if ("-docencoding".equals(option)) return 2;
-
-    // specific to this doclet
-    if ("-multiple".equals(option)) return 1;
-    if ("-filename".equals(option)) return 2;
-    if ("-implements".equals(option)) return 2;
-    if ("-extends".equals(option)) return 2;
-    if ("-annotated".equals(option)) return 2;
-    if ("-tag".equals(option)) return 2;
-    if ("-taglet".equals(option)) return 2;
-    if ("-subfolders".equals(option)) return 1;
-    return 0;
-  }
-
-  /**
-   * Retrieve the expected options from the given array of options.
-   *
-   * @param root The root object which contains the options to be retrieved.
-   */
-  public static Options toOptions(String options[][], DocErrorReporter reporter) {
-    Options o = new Options();
-
-    // Flags
-    o.multipleFiles = has(options, "-multiple");
-    o.subFolders    = has(options, "-subfolders");
-
-    // Output directory
-    if (has(options, "-d")) {
-      String directory = get(options, "-d");
-      if (directory == null) {
-        reporter.printError("Missing value for <directory>, usage:");
-        reporter.printError("-d <directory> Destination directory for output files");
-        return null;
-      } else {
-        o.directory = new File(directory);
-        // TODO check
-        reporter.printNotice("Output directory: "+directory);
-      }
-    } else {
-      reporter.printError("Output directory not specified; use -d <directory>");
-      return null;
-    }
-
-    // Output encoding
-    if (has(options, "-docencoding")) {
-      String encoding = get(options, "-docencoding");
-      if (encoding == null) {
-        reporter.printError("Missing value for <name>, usage:");
-        reporter.printError("-docencoding <name> \t Output encoding name");
-        return null;
-      } else {
-        o.encoding = Charset.forName(encoding);
-        reporter.printNotice("Output encoding: "+o.encoding);
-      }
-    }
-
-    // Extends
-    if (has(options, "-filename")) {
-      String name = get(options, "-filename");
-      if (name != null && !o.multipleFiles) {
-        o.filename = name;
-        reporter.printNotice("Using file name: "+name);
-      } else {
-        reporter.printWarning("'-filename' option ignored");
-      }
-    }
-
-    // Extends
-    if (has(options, "-extends")) {
-      String superclass = get(options, "-extends");
-      if (superclass != null) {
-        o.extendsFilter = superclass;
-        reporter.printNotice("Filtering classes extending: "+superclass);
-      } else {
-        reporter.printWarning("'-extends' option ignored - superclass not specified");
-      }
-    }
-
-    // Annotated
-    if (has(options, "-annotated")) {
-      String annotation = get(options, "-annotated");
-      if (annotation != null) {
-        o.annotationFilter = annotation;
-        reporter.printNotice("Filtering classes annotated: "+annotation);
-      } else {
-        reporter.printWarning("'-annotated' option ignored - annotation not specified");
-      }
-    }
-
-    // Implements
-    if (has(options, "-implements")) {
-      String iface = get(options, "-implements");
-      if (iface != null) {
-        o.implementsFilter = iface;
-        reporter.printNotice("Filtering classes implementing: "+iface);
-      } else {
-        reporter.printWarning("'-implements' option ignored - interface not specified");
-      }
-    }
-
-    // Custom Tags
-    if (has(options, "-tag")) {
-      List<String> tags = getAll(options, "-tag");
-      for (String def : tags) {
-        int colon = def.indexOf(':');
-        String name = colon < 0? def : def.substring(0, colon);
-        CustomTag tag = new CustomTag(name, false);
-        if (colon >= 0) {
-          // scope
-          String scope = def.substring(colon+1);
-          colon = scope.indexOf(':');
-          if (colon >= 0) {
-            String title = scope.substring(colon+1);
-            scope = scope.substring(0, colon);
-            tag.setTitle(title);
-          }
-          tag.setScope(scope);
-        }
-        o.taglets.put(name, new CustomTag(name, true));
-        reporter.printNotice("Using Tag "+name);
-      }
-    }
-
-    // Taglets
-    if (has(options, "-taglet")) {
-      String classes = get(options, "-taglet");
-      if (classes != null) {
-        for (String c : classes.split(":")) {
-          try {
-            Class<?> x = Class.forName(c);
-            Class<? extends Taglet> t = x.asSubclass(Taglet.class);
-            Method m = t.getMethod("register", Map.class);
-            m.invoke(null, o.taglets);
-            reporter.printNotice("Using Taglet "+t.getName());
-          } catch (Exception ex) {
-            reporter.printError("'-taglet' option reported error - :"+ex.getMessage());
-          }
-        }
-      } else {
-        reporter.printWarning("'-taglet' option ignored - classes not specified");
-      }
-    }
-
-    // If we reached this point everything is OK
-    return o;
-  }
-
-  /**
-   * Indicates whether the specified option is defined.
-   *
-   * @param options the matrix of command line options.
-   * @param name    the name of the requested option.
-   *
-   * @return <code>true</code> if defined; <code>false</code> otherwise.
-   */
-  private static boolean has(String[][] options, String name) {
-    for (String[] option : options) {
-      if (option[0].equals(name)) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Returns the list of single values for the specified option if defined.
-   *
-   * @param options the matrix of command line options.
-   * @param name    the name of the requested option.
-   *
-   * @return the array value if available or <code>null</code>.
-   */
-  private static List<String> getAll(String[][] options, String name) {
-    List<String> values = new ArrayList<String>();
-    for (String[] option : options) {
-      if (option[0].equals(name)) {
-        if (option.length > 1) {
-          values.add(option[1]);
-        }
-      }
-    }
-    return values;
-  }
-
-  /**
-   * Returns the single value for the specified option if defined.
-   *
-   * @param options the matrix of command line options.
-   * @param name    the name of the requested option.
-   *
-   * @return the value if available or <code>null</code>.
-   */
-  private static String get(String[][] options, String name) {
-    String[] option = find(options, name);
-    return (option.length > 1)? option[1] : null;
-  }
-
-  /**
-   * Finds the options array for the specified option name.
-   *
-   * <p>The first element is <i>always</i> the name of the option.
-   *
-   * @param options the matrix of command line options.
-   * @param name    the name of the requested option.
-   *
-   * @return the corresponding array or an empty array.
-   */
-  private static String[] find(String[][] options, String name) {
-    for (String[] option : options) {
-      if (option[0].equals(name)) return option;
-    }
-    // Option not available
-    return EMPTY_ARRAY;
+  public Set<? extends Doclet.Option> allOptions() {
+    Set<Doclet.Option> options = new HashSet<>();
+    options.add(new AnnotatedOption(this));
+    options.add(new DirectoryOption(this));
+    options.add(new DocencodingOption(this));
+    options.add(new ExtendsOption(this));
+    options.add(new FilenameOption(this));
+    options.add(new ImplementsOption(this));
+    options.add(new MultipleOption(this));
+    options.add(new SubfoldersOption(this));
+    options.add(new TagletOption(this));
+    options.add(new TagOption(this));
+    return options;
   }
 
   /**
@@ -450,8 +275,8 @@ public final class Options {
    * @param base the class to extend.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
    */
-  private static boolean filterExtends(ClassDoc doc, String base) {
-    ClassDoc superclass = doc.superclass();
+  private static boolean filterExtends(TypeElement doc, String base) {
+    TypeMirror superclass = doc.getSuperclass();
     return superclass != null && base.equals(superclass.toString());
   }
 
@@ -462,9 +287,9 @@ public final class Options {
    * @param iface the interface to implement.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
    */
-  private static boolean filterImplements(ClassDoc doc, String iface) {
-    ClassDoc[] interfaces = doc.interfaces();
-    for (ClassDoc i : interfaces) {
+  private static boolean filterImplements(TypeElement doc, String iface) {
+    List<? extends TypeMirror> interfaces = doc.getInterfaces();
+    for (TypeMirror i : interfaces) {
       if (iface.equals(i.toString())) return true;
     }
     return false;
@@ -477,10 +302,11 @@ public final class Options {
    * @param annotation the annotation to match.
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
    */
-  private static boolean filterAnnotated(ClassDoc doc, String annotation) {
-    AnnotationDesc[] annotations = doc.annotations();
-    for (AnnotationDesc i : annotations) {
-      if (annotation.equals(i.annotationType().qualifiedName())) return true;
+  private static boolean filterAnnotated(TypeElement doc, String annotation) {
+    List<? extends AnnotationMirror> annotations = doc.getAnnotationMirrors();
+    for (AnnotationMirror i : annotations) {
+      // TODO if (annotation.equals(i.getAnnotationType().qualifiedName())) return true;
+      if (annotation.equals(i.getAnnotationType().asElement().getSimpleName().toString())) return true;
     }
     return false;
   }

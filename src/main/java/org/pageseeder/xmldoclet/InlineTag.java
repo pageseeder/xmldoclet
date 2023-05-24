@@ -15,9 +15,13 @@
  */
 package org.pageseeder.xmldoclet;
 
-import com.sun.javadoc.Doc;
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet;
+
+import javax.lang.model.element.Element;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A collection of taglets to support the standard javadoc inline tags.
@@ -40,10 +44,10 @@ public enum InlineTag implements Taglet {
    */
   CODE("code") {
 
-    @Override
-    public String toString(Tag tag) {
-      return "<code><![CDATA["+tag.text()+"]]></code>";
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return "<code><![CDATA["+tag.text()+"]]></code>";
+//    }
 
   },
 
@@ -61,8 +65,8 @@ public enum InlineTag implements Taglet {
   DOCROOT("docRoot") {
 
     @Override
-    public String toString(Tag tag) {
-      // TODO Accommodate wwhen options for path are different (i.e. in subfolders)
+    public String toString(DocTree tag, Element element) {
+      // TODO Accommodate when options for path are different (i.e. in subfolders)
       return "";
     }
 
@@ -87,10 +91,10 @@ public enum InlineTag implements Taglet {
    */
   INHERITDOC("inheritDoc") {
 
-    @Override
-    public String toString(Tag tag) {
-      return "<div class=\"inherited\">"+tag.text()+"</div>";
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return "<div class=\"inherited\">"+tag.text()+"</div>";
+//    }
 
   },
 
@@ -110,10 +114,10 @@ public enum InlineTag implements Taglet {
    */
   LINK("link"){
 
-    @Override
-    public String toString(Tag tag) {
-      return toLinkString(tag, "link");
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return toLinkString(tag, "link");
+//    }
 
   },
 
@@ -126,10 +130,10 @@ public enum InlineTag implements Taglet {
    */
   LINKPLAIN("linkplain") {
 
-    @Override
-    public String toString(Tag tag) {
-      return toLinkString(tag, "linkplain");
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return toLinkString(tag, "linkplain");
+//    }
 
   },
 
@@ -142,10 +146,10 @@ public enum InlineTag implements Taglet {
    */
   LITERAL("literal") {
 
-    @Override
-    public String toString(Tag tag) {
-      return "<![CDATA["+tag.text()+"]]>";
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return "<![CDATA["+tag.text()+"]]>";
+//    }
 
   },
 
@@ -160,10 +164,10 @@ public enum InlineTag implements Taglet {
    */
   VALUE("value"){
 
-    @Override
-    public String toString(Tag tag) {
-      return "<var>"+tag.text()+"</var>";
-    }
+//    @Override
+//    public String toString(DocTree tag, Element element) {
+//      return "<var>"+tag.text()+"</var>";
+//    }
 
   };
 
@@ -193,41 +197,22 @@ public enum InlineTag implements Taglet {
     return true;
   }
 
-  @Override
-  public boolean inConstructor() {
-    return true;
+  /**
+   * @return the set of locations in which a tag may be used
+   */
+  public Set<Location> getAllowedLocations() {
+    return EnumSet.allOf(Location.class);
   }
 
-  @Override
-  public boolean inField(){
-    return true;
+  public String toString(DocTree tag, Element element) {
+    // FIXME Remove this method and define as abstract
+    return "<inline>TODO</inline>";
   }
 
-  @Override
-  public boolean inMethod() {
-    return true;
-  }
-
-  @Override
-  public boolean inOverview() {
-    return true;
-  }
-
-  @Override
-  public boolean inPackage() {
-    return true;
-  }
-
-  @Override
-  public boolean inType() {
-    return true;
-  }
-
-  @Override
-  public String toString(Tag[] tags) {
+  public String toString(List<? extends DocTree> tags, Element element) {
     StringBuilder out = new StringBuilder();
-    for (Tag t : tags) {
-      out.append(toString(t));
+    for (DocTree tag : tags) {
+      out.append(toString(tag, element));
     }
     return out.toString();
   }
@@ -235,98 +220,98 @@ public enum InlineTag implements Taglet {
   // Utility methods for links
   // ----------------------------------------------------------------------------------------------
 
-  /**
-   * @param tag The tag to analyse
-   * @return the package.class#member component of the tag.
-   */
-  private static String getLinkSpec(Tag tag) {
-    String text = tag.text();
-    int space = text.indexOf(' ');
-    return space >= 0? text.substring(0, space) : text;
-  }
-
-  /**
-   * @param tag The tag to analyse
-   * @return the package component of the tag.
-   */
-  private static String getLinkPackage(Tag tag) {
-    String spec = getLinkSpec(tag);
-    int dot = spec.lastIndexOf('.');
-    if (dot >= 0) // Package was included in reference
-    return spec.substring(0, dot);
-    else {
-      // Get package from doc
-      Doc doc = tag.holder();
-      spec = doc.toString();
-      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
-        dot = spec.lastIndexOf('.');
-      }
-      return dot >= 0? spec.substring(0, dot) : spec;
-    }
-  }
-
-  /**
-   * @param tag The tag to analyse
-   * @return the class name component of the tag.
-   */
-  private static String getClassName(Tag tag) {
-    String name = getLinkSpec(tag);
-    // remove package
-    int dot = name.lastIndexOf('.');
-    if (dot >= 0) { name = name.substring(dot+1); }
-    // remove member
-    int hash = name.indexOf('#');
-    if (hash >= 0) { name = name.substring(0, hash); }
-    if (name.length() == 0) {
-      Doc doc = tag.holder();
-      name = doc.toString();
-      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
-        // TODO
-        dot = name.lastIndexOf('.');
-      }
-    }
-    return name;
-  }
-
-  /**
-   * @param tag The tag to analyse
-   * @return the member component of the tag.
-   */
-  private static String getLinkMember(Tag tag) {
-    String spec = getLinkSpec(tag);
-    int hash = spec.indexOf('#');
-    return hash >= 0? spec.substring(hash+1) : null;
-  }
-
-  /**
-   * Returns the HTML link from the specified tag
-   *
-   * @param tag the tag to process.
-   * @param css the css class.
-   * @return the corresponding HTML
-   */
-  public static String toLinkString(Tag tag, String css) {
-    // extract spec and label
-    String text = tag.text();
-    int space = text.indexOf(' ');
-    String spec  = (space > 0)? text.substring(0, space) : text;
-    String label = (space > 0)? text.substring(space+1) : text;
-
-    // analyse spec
-    String p = getLinkPackage(tag);
-    String c = getClassName(tag);
-    String m = getLinkMember(tag);
-
-    // generate HTML link
-    StringBuilder html = new StringBuilder();
-    html.append("<a href=\"").append(spec).append("\" title=\"").append(label).append('"');
-    html.append(" class=\"").append(css).append('"');
-    html.append(" data-package=\"").append(p).append('"');
-    html.append(" data-class=\"").append(c).append('"');
-    if (m != null) {
-      html.append(" data-method=\"").append(m).append('"');
-    }
-    html.append('>').append(label).append("</a>");
-    return html.toString();
-  }
+//  /**
+//   * @param tag The tag to analyse
+//   * @return the package.class#member component of the tag.
+//   */
+//  private static String getLinkSpec(Tag tag) {
+//    String text = tag.text();
+//    int space = text.indexOf(' ');
+//    return space >= 0? text.substring(0, space) : text;
+//  }
+//
+//  /**
+//   * @param tag The tag to analyse
+//   * @return the package component of the tag.
+//   */
+//  private static String getLinkPackage(Tag tag) {
+//    String spec = getLinkSpec(tag);
+//    int dot = spec.lastIndexOf('.');
+//    if (dot >= 0) // Package was included in reference
+//    return spec.substring(0, dot);
+//    else {
+//      // Get package from doc
+//      Doc doc = tag.holder();
+//      spec = doc.toString();
+//      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
+//        dot = spec.lastIndexOf('.');
+//      }
+//      return dot >= 0? spec.substring(0, dot) : spec;
+//    }
+//  }
+//
+//  /**
+//   * @param tag The tag to analyse
+//   * @return the class name component of the tag.
+//   */
+//  private static String getClassName(Tag tag) {
+//    String name = getLinkSpec(tag);
+//    // remove package
+//    int dot = name.lastIndexOf('.');
+//    if (dot >= 0) { name = name.substring(dot+1); }
+//    // remove member
+//    int hash = name.indexOf('#');
+//    if (hash >= 0) { name = name.substring(0, hash); }
+//    if (name.length() == 0) {
+//      Doc doc = tag.holder();
+//      name = doc.toString();
+//      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
+//        // TODO
+//        dot = name.lastIndexOf('.');
+//      }
+//    }
+//    return name;
+//  }
+//
+//  /**
+//   * @param tag The tag to analyse
+//   * @return the member component of the tag.
+//   */
+//  private static String getLinkMember(Tag tag) {
+//    String spec = getLinkSpec(tag);
+//    int hash = spec.indexOf('#');
+//    return hash >= 0? spec.substring(hash+1) : null;
+//  }
+//
+//  /**
+//   * Returns the HTML link from the specified tag
+//   *
+//   * @param tag the tag to process.
+//   * @param css the css class.
+//   * @return the corresponding HTML
+//   */
+//  public static String toLinkString(Tag tag, String css) {
+//    // extract spec and label
+//    String text = tag.text();
+//    int space = text.indexOf(' ');
+//    String spec  = (space > 0)? text.substring(0, space) : text;
+//    String label = (space > 0)? text.substring(space+1) : text;
+//
+//    // analyse spec
+//    String p = getLinkPackage(tag);
+//    String c = getClassName(tag);
+//    String m = getLinkMember(tag);
+//
+//    // generate HTML link
+//    StringBuilder html = new StringBuilder();
+//    html.append("<a href=\"").append(spec).append("\" title=\"").append(label).append('"');
+//    html.append(" class=\"").append(css).append('"');
+//    html.append(" data-package=\"").append(p).append('"');
+//    html.append(" data-class=\"").append(c).append('"');
+//    if (m != null) {
+//      html.append(" data-method=\"").append(m).append('"');
+//    }
+//    html.append('>').append(label).append("</a>");
+//    return html.toString();
+//  }
 }

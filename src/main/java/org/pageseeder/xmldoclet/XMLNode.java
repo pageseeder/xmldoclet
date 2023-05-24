@@ -21,8 +21,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -31,12 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.w3c.tidy.Tidy;
-import org.w3c.tidy.TidyMessage;
-import org.w3c.tidy.TidyMessage.Level;
-import org.w3c.tidy.TidyMessageListener;
-
-import com.sun.javadoc.Doc;
+import javax.lang.model.element.Element;
 
 /**
  * Represents an XML node.
@@ -65,12 +58,12 @@ public final class XMLNode {
   /**
    * The source document the node corresponds to.
    */
-  private Doc _doc = null;
+  private Element _doc = null;
 
   /**
    * The namespace URI of all nodes.
    */
-  private static final String NAMESPACE_URI = "http://weborganic.org/xmldoclet";
+  private static final String NAMESPACE_URI = "https://pageseeder.org/xmldoclet";
 
   /**
    * Sets the namespace prefix for this node.
@@ -80,22 +73,22 @@ public final class XMLNode {
   /**
    * The attributes
    */
-  private Map<String, String> _attributes;
+  private final Map<String, String> _attributes;
 
   /**
    * The child nodes
    */
-  private List<XMLNode> _children;
+  private final List<XMLNode> _children;
 
   /**
-   * The content, which may be include markup.
+   * The content, which may include markup.
    */
-  private StringBuilder _content;
+  private final StringBuilder _content;
 
   /**
    * The line in the source.
    */
-  private int _line;
+  private final int _line;
 
   /**
    * Constructs the XMLNode.
@@ -103,11 +96,11 @@ public final class XMLNode {
    * @param name The name of the element
    * @param doc  The source java document the node belongs to.
    */
-  public XMLNode(String name, Doc doc, int line) {
+  public XMLNode(String name, Element doc, int line) {
     this._name = name;
     this._doc = doc;
-    this._attributes = new HashMap<String, String>();
-    this._children = new ArrayList<XMLNode>();
+    this._attributes = new HashMap<>();
+    this._children = new ArrayList<>();
     this._content = new StringBuilder();
     this._line = line;
   }
@@ -118,7 +111,7 @@ public final class XMLNode {
    * @param name The name of the element
    * @param doc  The source java document the node belongs to.
    */
-  public XMLNode(String name, Doc doc) {
+  public XMLNode(String name, Element doc) {
     this(name, doc, -1);
   }
 
@@ -188,7 +181,7 @@ public final class XMLNode {
    *
    * @param doc the doc
    */
-  private void setDoc(Doc doc) {
+  private void setDoc(Element doc) {
     if (doc == null) return;
     if (this._doc == null) {
       this._doc = doc;
@@ -222,9 +215,6 @@ public final class XMLNode {
   }
 
   /**
-   * Returns the name of the node.
-   *
-   * @param name The name of the node.
    * @return The name of the node.
    */
   public String getName() {
@@ -274,16 +264,16 @@ public final class XMLNode {
     StringBuilder out = new StringBuilder();
 
     // Open element
-    out.append(tabs + "<" + this._namespacePrefix + this._name);
+    out.append(tabs).append("<").append(this._namespacePrefix).append(this._name);
 
     // Serialise the attributes
     for (Entry<String, String> att : this._attributes.entrySet()) {
-      out.append(" " + att.getKey() + "=\"" + encodeAttribute(att.getValue()) + "\"");
+      out.append(" ").append(att.getKey()).append("=\"").append(encodeAttribute(att.getValue())).append("\"");
     }
 
     // Close if empty element (no text node AND no children)
     if (this._content.length() <= 0 && this._children.isEmpty()) {
-      out.append(" />" + CRLF);
+      out.append(" />").append(CRLF);
       return out.toString();
     }
 
@@ -308,7 +298,8 @@ public final class XMLNode {
     if (!this._children.isEmpty()) {
       out.append(tabs);
     }
-    out.append("</" + this._namespacePrefix + this._name + ">" + CRLF + ("class".equalsIgnoreCase(this._name)? CRLF : ""));
+    out.append("</").append(this._namespacePrefix).append(this._name).append(">")
+            .append(CRLF).append("class".equalsIgnoreCase(this._name) ? CRLF : "");
 
     return out.toString();
   }
@@ -320,7 +311,7 @@ public final class XMLNode {
    * @param doc  The source java document the node belongs to.
    * @return The encoded string.
    */
-  private static String encode(String text, Doc doc, int line) {
+  private static String encode(String text, Element doc, int line) {
     if (text.indexOf('<') >= 0) return tidy(text, doc, line);
     else return encodeElement(text);
   }
@@ -374,53 +365,56 @@ public final class XMLNode {
    * @param doc  The source java document the node belongs to.
    * @return the tidied HTML
    */
-  private static String tidy(String text, Doc doc, int line) {
-    Tidy tidy = new Tidy();
-    tidy.setXmlOut(true);
-    tidy.setEncloseText(false);
-    tidy.setQuiet(true);
-    tidy.setEscapeCdata(false);
-    tidy.setIndentCdata(false);
-    tidy.setTrimEmptyElements(false);
-    tidy.setDropProprietaryAttributes(false);
-    tidy.setErrout(VOID_WRITER);
-
-    // Tidy wants a full HTML document...
-    StringBuilder in = new StringBuilder();
-    in.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"");
-    in.append(" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
-    in.append("<html><head><title>Remove</title></head><body>");
-    in.append(text);
-    in.append("</body></html>");
-
-    // Count new lines
-    int baseline = line;
-    if (line != -1) {
-      baseline = line - countLines(doc.getRawCommentText()) -2;
-    }
-    tidy.setMessageListener(new Listener(doc, baseline));
-
-    // Tidy
-    StringWriter w = new StringWriter();
-    tidy.parse(new StringReader(in.toString()), w);
-    String out = w.toString();
-
-    // Get output
-    int start = out.indexOf("<body>");
-    int end = out.indexOf("</body>");
-    if (start != -1 && end != -1) return out.substring(start+6, end);
-
-    // Second chance try with XML
-    tidy.setXmlTags(true);
-    in.setLength(0);
-    in.append(text);
-
-    // Tidy
-    w = new StringWriter();
-    tidy.parse(new StringReader(in.toString()), w);
-
-    // Report errors
-    return w.toString();
+  private static String tidy(String text, Element doc, int line) {
+    // TODO FIXME
+    return "";
+//    Tidy tidy = new Tidy();
+//    tidy.setXmlOut(true);
+//    tidy.setEncloseText(false);
+//    tidy.setQuiet(true);
+//    tidy.setEscapeCdata(false);
+//    tidy.setIndentCdata(false);
+//    tidy.setTrimEmptyElements(false);
+//    tidy.setDropProprietaryAttributes(false);
+//    tidy.setErrout(VOID_WRITER);
+//
+//    // Tidy wants a full HTML document...
+//    StringBuilder in = new StringBuilder();
+//    in.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"");
+//    in.append(" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
+//    in.append("<html><head><title>Remove</title></head><body>");
+//    in.append(text);
+//    in.append("</body></html>");
+//
+//    // Count new lines
+//    int baseline = line;
+//    if (line != -1) {
+//      // TODO Compute the lines
+//// FIXME     baseline = line - countLines(doc.getRawCommentText()) -2;
+//    }
+//    tidy.setMessageListener(new Listener(doc, baseline));
+//
+//    // Tidy
+//    StringWriter w = new StringWriter();
+//    tidy.parse(new StringReader(in.toString()), w);
+//    String out = w.toString();
+//
+//    // Get output
+//    int start = out.indexOf("<body>");
+//    int end = out.indexOf("</body>");
+//    if (start != -1 && end != -1) return out.substring(start+6, end);
+//
+//    // Second chance try with XML
+//    tidy.setXmlTags(true);
+//    in.setLength(0);
+//    in.append(text);
+//
+//    // Tidy
+//    w = new StringWriter();
+//    tidy.parse(new StringReader(in.toString()), w);
+//
+//    // Report errors
+//    return w.toString();
   }
 
   private static int countLines(String text) {
@@ -436,52 +430,49 @@ public final class XMLNode {
   /**
    * A listener to capture errors thrown by tidy.
    */
-  private static class Listener implements TidyMessageListener  {
-
-    /**
-     * Error code returned by Tidy for unknown attributes.
-     */
-    private static final int UNKNOWN_ATTRIBUTE = 48;
-
-    /**
-     * The current document being processing.
-     */
-    private final Doc _doc;
-
-    /**
-     * The line where the source that is being tidied starts.
-     */
-    private final int _baseline;
-
-    /**
-     * Creates a new listener for tidy
-     *
-     * @param doc      The source java doc
-     * @param baseline The line where the source that is being tidied starts.
-     */
-    public Listener(Doc doc, int baseline) {
-      this._doc = doc;
-      this._baseline = baseline;
-    }
-
-    @Override
-    public void messageReceived(TidyMessage message) {
-      int code = message.getErrorCode();
-      int line = this._baseline >= 0? this._baseline + message.getLine() : -1;
-      if (code != UNKNOWN_ATTRIBUTE) {
-        Level level = message.getLevel();
-        String prefix = "["+level+"]"+(level == Level.ERROR? "   " : " ");
-        System.err.println(prefix+this._doc.toString()+":" +(line != -1? "L"+line+" " : " ")+message.getMessage());
-      }
-    }
-
-  };
+//  private static class Listener implements TidyMessageListener  {
+//
+//    /**
+//     * Error code returned by Tidy for unknown attributes.
+//     */
+//    private static final int UNKNOWN_ATTRIBUTE = 48;
+//
+//    /**
+//     * The current document being processing.
+//     */
+//    private final Element _doc;
+//
+//    /**
+//     * The line where the source that is being tidied starts.
+//     */
+//    private final int _baseline;
+//
+//    /**
+//     * Creates a new listener for tidy
+//     *
+//     * @param doc      The source java doc
+//     * @param baseline The line where the source that is being tidied starts.
+//     */
+//    public Listener(Element doc, int baseline) {
+//      this._doc = doc;
+//      this._baseline = baseline;
+//    }
+//
+//    @Override
+//    public void messageReceived(TidyMessage message) {
+//      int code = message.getErrorCode();
+//      int line = this._baseline >= 0? this._baseline + message.getLine() : -1;
+//      if (code != UNKNOWN_ATTRIBUTE) {
+//        Level level = message.getLevel();
+//        String prefix = "["+level+"]"+(level == Level.ERROR? "   " : " ");
+//        System.err.println(prefix+this._doc.toString()+":" +(line != -1? "L"+line+" " : " ")+message.getMessage());
+//      }
+//    }
+//
+//  };
 
   /**
    * Does nothing.
-   *
-   * @author Christophe Lauret
-   * @version 9 May 2012
    */
   private static class VoidWriter extends Writer {
 
