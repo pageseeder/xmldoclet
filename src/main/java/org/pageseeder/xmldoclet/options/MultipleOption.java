@@ -1,15 +1,16 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Reporter;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MultipleOption extends XMLDocletOption {
+public class MultipleOption extends XMLDocletOptionBase {
 
-  public MultipleOption(Options options) {
-    super(options);
+  private boolean enabled = false;
+
+  public MultipleOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -39,7 +40,12 @@ public class MultipleOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    this.options.setMultipleFiles(true);
+    this.enabled = true;
     return true;
   }
+
+  public boolean enabled() {
+    return this.enabled;
+  }
+
 }

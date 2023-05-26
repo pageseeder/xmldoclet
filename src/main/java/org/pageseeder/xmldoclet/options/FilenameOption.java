@@ -1,15 +1,22 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Reporter;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class FilenameOption extends XMLDocletOption {
+public class FilenameOption extends XMLDocletOptionBase {
 
-  public FilenameOption(Options options) {
-    super(options);
+  /**
+   * The default filename for the output.
+   */
+  private static final String DEFAULT_FILENAME = "xmldoclet.xml";
+
+  private String filename = DEFAULT_FILENAME;
+
+  public FilenameOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -39,17 +46,12 @@ public class FilenameOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    // TODO
-//        // Extends
-//        if (has(options, "-filename")) {
-//            String name = get(options, "-filename");
-//            if (name != null && !o.multipleFiles) {
-//                o.filename = name;
-//                reporter.print(Diagnostic.Kind.NOTE, "Using file name: "+name);
-//            } else {
-//                reporter.print(Diagnostic.Kind.WARNING, "'-filename' option ignored");
-//            }
-//        }
-    return false;
+    this.filename = arguments.get(0);
+    return true;
   }
+
+  public String getFilename() {
+    return this.filename;
+  }
+
 }

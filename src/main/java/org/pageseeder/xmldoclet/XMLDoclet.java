@@ -26,6 +26,8 @@ import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Reporter;
 
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 
 /**
@@ -43,17 +45,18 @@ public final class XMLDoclet implements Doclet {
    */
   private static final String ISO_8601 = "yyyy-MM-dd'T'HH:mm:ss";
 
-  Reporter reporter;
+  private Reporter reporter;
 
   /**
    * The method used by this method invocation.
    */
-  private final Options options = new Options();
+  private Options options;
 
   @Override
   public void init(Locale locale, Reporter reporter) {
     reporter.print(Diagnostic.Kind.NOTE, "Doclet using locale: " + locale);
     this.reporter = reporter;
+    options = new Options(reporter);
   }
 
   /**
@@ -65,11 +68,8 @@ public final class XMLDoclet implements Doclet {
    */
   @Override
   public boolean run(DocletEnvironment docEnv) {
-    // get the DocTrees utility class to access document comments
-    DocTrees docTrees = docEnv.getDocTrees();
-
     // Create the root node.
-    List<XMLNode> nodes = toXMLNodes(docTrees);
+    List<XMLNode> nodes = toXMLNodes(docEnv);
 
     // Save the output XML
     save(nodes);
@@ -84,7 +84,7 @@ public final class XMLDoclet implements Doclet {
 
   @Override
   public Set<? extends Option> getSupportedOptions() {
-    return this.options.allOptions();
+    return this.options.asSet();
   }
 
   /**
@@ -95,7 +95,6 @@ public final class XMLDoclet implements Doclet {
     // support the latest release
     return SourceVersion.latest();
   }
-
 
   /**
    * Save the given array of nodes.
@@ -165,40 +164,34 @@ public final class XMLDoclet implements Doclet {
   /**
    * Returns the XML nodes for all the selected classes in the specified RootDoc.
    *
-   * @param root The RootDoc from which the XML should be built.
+   * @param env The doclet environment
    * @return The list of XML nodes which represents the RootDoc.
    */
-  private static List<XMLNode> toXMLNodes(DocTrees root) {
+  private List<XMLNode> toXMLNodes(DocletEnvironment env) {
     List<XMLNode> nodes = new ArrayList<>();
 
+    // get the DocTrees utility class to access document comments
+    DocTrees docTrees = env.getDocTrees();
 
+    // Iterate over elements
+    for (TypeElement element : ElementFilter.typesIn(env.getIncludedElements())) {
 
-    // location of an element in the same directory as overview.html
-//    try {
-//      Element e = ElementFilter.typesIn(docEnv.getSpecifiedElements()).iterator().next();
-//      DocCommentTree docCommentTree
-//              = docTrees.getDocCommentTree(e, overviewfile);
-//      if (docCommentTree != null) {
-//        System.out.println("Overview html: " + docCommentTree.getFullBody());
-//      }
-//    } catch (IOException missing) {
-//      reporter.print(Kind.ERROR, "No overview.html found.");
-//    }
-//
-//    for (TypeElement t : ElementFilter.typesIn(docEnv.getIncludedElements())) {
-//      System.out.println(t.getKind() + ":" + t);
+      // Apply the filters from options
+      if (this.options.filter(element)) {
+        System.out.println(element.getKind() + ":" + element);
+        nodes.add(toClassNode(element));
+      }
+
 //      for (Element e : t.getEnclosedElements()) {
-//        printElement(docTrees, e);
+//        DocCommentTree docCommentTree = docTrees.getDocCommentTree(e);
+//        if (docCommentTree != null) {
+//          System.out.println("Element (" + e.getKind() + ": " + e + ") has the following comments:");
+//          System.out.println(" +-Entire body: " + docCommentTree.getFullBody());
+//          System.out.println(" +-Block tags: " + docCommentTree.getBlockTags());
+//        }
 //      }
-//    }
+    }
 
-    // Iterate over the classes
-//    for (ClassDoc doc : root.classes()) {
-//      if (options.filter(doc)) {
-//        nodes.add(toClassNode(doc));
-//      }
-//    }
-//
 //    // Iterate over packages
 //    if (!options.hasFilter()) {
 //      for (PackageDoc doc : root.specifiedPackages()) {
@@ -231,23 +224,23 @@ public final class XMLDoclet implements Doclet {
 //
 //    return node;
 //  }
-//
-//  /**
-//   * Returns the XML node corresponding to the specified ClassDoc.
-//   *
-//   * @param classDoc The class to transform.
-//   */
-//  private static XMLNode toClassNode(ClassDoc classDoc) {
-//     XMLNode node = new XMLNode("class", classDoc);
-//
-//    // Core attributes
+
+  /**
+   * Returns the XML node corresponding to the specified ClassDoc.
+   *
+   * @param classDoc The class to transform.
+   */
+  private XMLNode toClassNode(TypeElement classDoc) {
+     XMLNode node = new XMLNode("class", classDoc);
+
+    // Core attributes
 //    node.attribute("type",       classDoc.name());
 //    node.attribute("fulltype",   classDoc.qualifiedName());
 //    node.attribute("name",       classDoc.qualifiedName());
 //    node.attribute("package",    classDoc.containingPackage().name());
 //    node.attribute("visibility", getVisibility(classDoc));
-//
-//    // Interfaces
+
+    // Interfaces
 //    ClassDoc[] interfaces = classDoc.interfaces();
 //    if (interfaces.length > 0) {
 //      XMLNode implement = new XMLNode("implements");
@@ -259,24 +252,24 @@ public final class XMLDoclet implements Doclet {
 //      }
 //      node.child(implement);
 //    }
-//
-//    // Superclass
+
+    // Superclass
 //    if (classDoc.superclass() != null) {
 //      node.attribute("superclass", classDoc.superclass().name());
 //      node.attribute("superclassfulltype", classDoc.superclass().qualifiedName());
 //    }
-//
-//    // Class properties
+
+    // Class properties
 //    node.attribute("interface",    classDoc.isInterface());
 //    node.attribute("final",        classDoc.isFinal());
 //    node.attribute("abstract",     classDoc.isAbstract());
 //    node.attribute("serializable", classDoc.isSerializable());
 //    node.attribute("enum",         classDoc.isEnum());
-//
-//    // Comment
+
+    // Comment
 //    node.child(toComment(classDoc));
-//
-//    // Other child nodes
+
+    // Other child nodes
 //    node.child(toAnnotationsNode(classDoc.annotations()));
 //    node.child(toStandardTags(classDoc));
 //    node.child(toTags(classDoc));
@@ -284,15 +277,15 @@ public final class XMLDoclet implements Doclet {
 //    node.child(toFieldsNode(classDoc.fields()));
 //    node.child(toConstructorsNode(classDoc.constructors()));
 //    node.child(toMethods(classDoc.methods()));
-//
-//    // Handle inner classes
+
+    // Handle inner classes
 //    for (ClassDoc inner : classDoc.innerClasses()) {
 //      node.child(toClassNode(inner));
 //    }
-//
-//    return node;
-//  }
-//
+
+    return node;
+  }
+
 //  /**
 //   * Returns the specified field as an XML node.
 //   *

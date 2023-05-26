@@ -1,15 +1,15 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Taglet;
+import jdk.javadoc.doclet.Reporter;
 
 import java.util.Collections;
 import java.util.List;
 
-public class TagletOption extends XMLDocletOption {
+public class TagletOption extends XMLDocletOptionBase {
 
-  public TagletOption(Options options) {
-    super(options);
+  public TagletOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -39,27 +39,20 @@ public class TagletOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    // TODO
-
-//        // Taglets
-//        if (has(options, "-taglet")) {
-//            String classes = get(options, "-taglet");
-//            if (classes != null) {
-//                for (String c : classes.split(":")) {
-//                    try {
-//                        Class<?> x = Class.forName(c);
-//                        Class<? extends Taglet> t = x.asSubclass(Taglet.class);
-//                        Method m = t.getMethod("register", Map.class);
-//                        m.invoke(null, o.taglets);
-//                        reporter.print(Diagnostic.Kind.NOTE, "Using Taglet "+t.getName());
-//                    } catch (Exception ex) {
-//                        reporter.print(Diagnostic.Kind.ERROR, "'-taglet' option reported error - :"+ex.getMessage());
-//                    }
-//                }
-//            } else {
-//                reporter.print(Diagnostic.Kind.WARNING, "'-taglet' option ignored - classes not specified");
-//            }
-//        }
-    return false;
+    String classes = arguments.get(0);
+    for (String className : classes.split(":")) {
+      try {
+        // FIXME API has changed
+        Class<?> clazz = Class.forName(className);
+        Class<? extends Taglet> t = clazz.asSubclass(Taglet.class);
+//        Method m = t.getMethod("register", Map.class);
+//        m.invoke(null, o.taglets);
+//        options.note("Using Taglet " + t.getName());
+      } catch (Exception ex) {
+        error("'-taglet' option reported error - :" + ex.getMessage());
+        return false;
+      }
+    }
+    return true;
   }
 }

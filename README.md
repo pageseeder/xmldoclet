@@ -32,9 +32,9 @@ the `jdk.home` variable. for example:
 
 ## Testing
 
-```
+```shell
 javadoc -doclet org.pageseeder.xmldoclet.XMLDoclet \
        -docletpath target/classes \
        -sourcepath src/main/java \
-       src/main/java/org/pageseeder/xmldoclet/XMLDoclet.java
+       org.pageseeder.xmldoclet org.pageseeder.xmldoclet.options
 ```

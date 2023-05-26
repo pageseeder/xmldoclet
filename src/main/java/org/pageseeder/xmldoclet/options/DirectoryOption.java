@@ -1,17 +1,17 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Reporter;
 
-import javax.tools.Diagnostic;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class DirectoryOption extends XMLDocletOption {
+public class DirectoryOption extends XMLDocletOptionBase {
 
-  public DirectoryOption(Options options) {
-    super(options);
+  private File directory = new File(".");
+
+  public DirectoryOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -41,24 +41,12 @@ public class DirectoryOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-      // TODO
+    this.directory = new File(arguments.get(0));
+    return true;
+  }
 
-//    // Output directory
-//    if (has(options, "-d")) {
-//        String directory = get(options, "-d");
-//        if (directory == null) {
-//            reporter.print(Diagnostic.Kind.ERROR, "Missing value for <directory>, usage:");
-//            reporter.print(Diagnostic.Kind.ERROR,"-d <directory> Destination directory for output files");
-//            return null;
-//        } else {
-//            o.directory = new File(directory);
-//            // TODO check
-//            reporter.print(Diagnostic.Kind.NOTE, "Output directory: "+directory);
-//        }
-//    } else {
-//        reporter.print(Diagnostic.Kind.ERROR, "Output directory not specified; use -d <directory>");
-//        return null;
-//    }
-      return false;
-    }
+  public File getDirectory() {
+    return this.directory;
+  }
+
 }

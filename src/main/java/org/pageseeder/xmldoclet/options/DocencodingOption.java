@@ -1,17 +1,18 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Reporter;
 
-import javax.tools.Diagnostic;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-public class DocencodingOption extends XMLDocletOption {
+public class DocencodingOption extends XMLDocletOptionBase {
 
-  public DocencodingOption(Options options) {
-    super(options);
+  private Charset charset = StandardCharsets.UTF_8;
+
+  public DocencodingOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -41,20 +42,19 @@ public class DocencodingOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    // TODO
-
-//        // Output encoding
-//        if (has(options, "-docencoding")) {
-//            String encoding = get(options, "-docencoding");
-//            if (encoding == null) {
-//                reporter.print(Diagnostic.Kind.ERROR, "Missing value for <name>, usage:");
-//                reporter.print(Diagnostic.Kind.ERROR, "-docencoding <name> \t Output encoding name");
-//                return null;
-//            } else {
-//                o.encoding = Charset.forName(encoding);
-//                reporter.print(Diagnostic.Kind.NOTE, "Output encoding: "+o.encoding);
-//            }
-//        }
-    return false;
+    String encoding = arguments.get(0);
+    try {
+      this.charset = Charset.forName(encoding);
+      note("Output encoding: "+charset);
+    } catch (IllegalArgumentException ex) {
+      error("Unsupported encoding encoding value - must match available charset");
+      return false;
+    }
+    return true;
   }
+
+  public Charset getCharset() {
+    return this.charset;
+  }
+
 }

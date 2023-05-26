@@ -1,15 +1,16 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
-import org.pageseeder.xmldoclet.Options;
+import jdk.javadoc.doclet.Reporter;
 
 import java.util.Collections;
 import java.util.List;
 
-public class SubfoldersOption extends XMLDocletOption {
+public class SubfoldersOption extends XMLDocletOptionBase {
 
-  public SubfoldersOption(Options options) {
-    super(options);
+  private boolean enabled = false;
+
+  public SubfoldersOption(Reporter reporter) {
+    super(reporter);
   }
 
   @Override
@@ -39,7 +40,12 @@ public class SubfoldersOption extends XMLDocletOption {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    // TODO
-    return false;
+    this.enabled = true;
+    return true;
   }
+
+  public boolean enabled() {
+    return this.enabled;
+  }
+
 }

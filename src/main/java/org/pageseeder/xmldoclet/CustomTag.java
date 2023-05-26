@@ -152,4 +152,9 @@ public final class CustomTag implements Taglet {
     }
     return out.toString();
   }
+
+  @Override
+  public String toString() {
+    return this._name;
+  }
 }

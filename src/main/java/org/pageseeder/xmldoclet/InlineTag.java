@@ -29,7 +29,7 @@ import java.util.Set;
  * <p>These will replace text within comments using XHTML for links.
  *
  * @author Christophe Lauret
- * @version 9 May 2012
+ * @version 1.0
  */
 public enum InlineTag implements Taglet {
 
