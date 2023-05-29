@@ -194,7 +194,7 @@ public final class XMLDoclet implements Doclet {
 
     // Core attributes
     node.attribute("unnamed", doc.isUnnamed());
-    node.attribute("name", doc.getSimpleName().toString());
+    node.attribute("name", doc.getQualifiedName().toString());
 
     // Comment
     // TODO
