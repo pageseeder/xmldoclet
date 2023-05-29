@@ -15,10 +15,11 @@
  */
 package org.pageseeder.xmldoclet;
 
-import com.sun.source.doctree.DocTree;
+import com.sun.source.doctree.*;
 import jdk.javadoc.doclet.Taglet;
 
 import javax.lang.model.element.Element;
+import java.lang.ref.Reference;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -114,10 +115,13 @@ public enum InlineTag implements Taglet {
    */
   LINK("link"){
 
-//    @Override
-//    public String toString(DocTree tag, Element element) {
-//      return toLinkString(tag, "link");
-//    }
+    @Override
+    public String toString(DocTree tag, Element element) {
+      if (tag instanceof LinkTree) {
+        return toLinkString((LinkTree)tag, "link");
+      }
+      return super.toString(tag, element);
+    }
 
   },
 
@@ -130,10 +134,13 @@ public enum InlineTag implements Taglet {
    */
   LINKPLAIN("linkplain") {
 
-//    @Override
-//    public String toString(DocTree tag, Element element) {
-//      return toLinkString(tag, "linkplain");
-//    }
+    @Override
+    public String toString(DocTree tag, Element element) {
+      if (tag instanceof LinkTree) {
+        return toLinkString((LinkTree)tag, "linkplain");
+      }
+      return super.toString(tag, element);
+    }
 
   },
 
@@ -141,15 +148,17 @@ public enum InlineTag implements Taglet {
    * Displays text without interpreting the text as HTML markup or nested javadoc tags.
    *
    * <p>Literal tags are simply wrapped in CDATA sections.
-   *
-   * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#literal">@literal tag</a>
    */
   LITERAL("literal") {
 
-//    @Override
-//    public String toString(DocTree tag, Element element) {
-//      return "<![CDATA["+tag.text()+"]]>";
-//    }
+    @Override
+    public String toString(DocTree tag, Element element) {
+      if (tag instanceof LiteralTree) {
+        LiteralTree literal = ((LiteralTree)tag);
+        return "<![CDATA["+literal.getBody().toString()+"]]>";
+      }
+      return "<![CDATA["+tag.toString()+"]]>";
+    }
 
   },
 
@@ -164,10 +173,16 @@ public enum InlineTag implements Taglet {
    */
   VALUE("value"){
 
-//    @Override
-//    public String toString(DocTree tag, Element element) {
-//      return "<var>"+tag.text()+"</var>";
-//    }
+    @Override
+    public String toString(DocTree tag, Element element) {
+      if (tag instanceof ValueTree) {
+        ValueTree value = ((ValueTree)tag);
+        ReferenceTree ref = value.getReference();
+        // TODO
+        return "<var>"+ref.getSignature()+"</var>";
+      }
+      return "<var>"+tag.toString()+"</var>";
+    }
 
   };
 
@@ -205,7 +220,11 @@ public enum InlineTag implements Taglet {
   }
 
   public String toString(DocTree tag, Element element) {
-    // FIXME Remove this method and define as abstract
+    if (tag instanceof InlineTagTree) {
+      InlineTagTree inline = ((InlineTagTree)tag);
+      String name = inline.getTagName();
+      return "<"+name+">"+inline.toString()+"</"+name+">";
+    }
     return "<inline>TODO</inline>";
   }
 
@@ -220,98 +239,100 @@ public enum InlineTag implements Taglet {
   // Utility methods for links
   // ----------------------------------------------------------------------------------------------
 
-//  /**
-//   * @param tag The tag to analyse
-//   * @return the package.class#member component of the tag.
-//   */
-//  private static String getLinkSpec(Tag tag) {
-//    String text = tag.text();
-//    int space = text.indexOf(' ');
-//    return space >= 0? text.substring(0, space) : text;
-//  }
-//
-//  /**
-//   * @param tag The tag to analyse
-//   * @return the package component of the tag.
-//   */
-//  private static String getLinkPackage(Tag tag) {
-//    String spec = getLinkSpec(tag);
-//    int dot = spec.lastIndexOf('.');
-//    if (dot >= 0) // Package was included in reference
-//    return spec.substring(0, dot);
-//    else {
-//      // Get package from doc
+  /**
+   * @param tag The tag to analyse
+   * @return the package.class#member component of the tag.
+   */
+  private static String getLinkSpec(LinkTree tag) {
+    // TODO Use reference?
+    String text = tag.getLabel().toString();
+    int space = text.indexOf(' ');
+    return space >= 0? text.substring(0, space) : text;
+  }
+
+  /**
+   * @param tag The tag to analyse
+   * @return the package component of the tag.
+   */
+  private static String getLinkPackage(LinkTree tag) {
+    String spec = getLinkSpec(tag);
+    int dot = spec.lastIndexOf('.');
+    if (dot >= 0) // Package was included in reference
+    return spec.substring(0, dot);
+    else {
+      // FIXME Get package from doc
 //      Doc doc = tag.holder();
 //      spec = doc.toString();
 //      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
 //        dot = spec.lastIndexOf('.');
 //      }
-//      return dot >= 0? spec.substring(0, dot) : spec;
-//    }
-//  }
-//
-//  /**
-//   * @param tag The tag to analyse
-//   * @return the class name component of the tag.
-//   */
-//  private static String getClassName(Tag tag) {
-//    String name = getLinkSpec(tag);
-//    // remove package
-//    int dot = name.lastIndexOf('.');
-//    if (dot >= 0) { name = name.substring(dot+1); }
-//    // remove member
-//    int hash = name.indexOf('#');
-//    if (hash >= 0) { name = name.substring(0, hash); }
-//    if (name.length() == 0) {
+      return dot >= 0? spec.substring(0, dot) : spec;
+    }
+  }
+
+  /**
+   * @param tag The tag to analyse
+   * @return the class name component of the tag.
+   */
+  private static String getClassName(LinkTree tag) {
+    String name = getLinkSpec(tag);
+    // remove package
+    int dot = name.lastIndexOf('.');
+    if (dot >= 0) { name = name.substring(dot+1); }
+    // remove member
+    int hash = name.indexOf('#');
+    if (hash >= 0) { name = name.substring(0, hash); }
+    if (name.length() == 0) {
+      // TODO
 //      Doc doc = tag.holder();
 //      name = doc.toString();
 //      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
-//        // TODO
 //        dot = name.lastIndexOf('.');
 //      }
-//    }
-//    return name;
-//  }
-//
-//  /**
-//   * @param tag The tag to analyse
-//   * @return the member component of the tag.
-//   */
-//  private static String getLinkMember(Tag tag) {
-//    String spec = getLinkSpec(tag);
-//    int hash = spec.indexOf('#');
-//    return hash >= 0? spec.substring(hash+1) : null;
-//  }
-//
-//  /**
-//   * Returns the HTML link from the specified tag
-//   *
-//   * @param tag the tag to process.
-//   * @param css the css class.
-//   * @return the corresponding HTML
-//   */
-//  public static String toLinkString(Tag tag, String css) {
-//    // extract spec and label
-//    String text = tag.text();
-//    int space = text.indexOf(' ');
-//    String spec  = (space > 0)? text.substring(0, space) : text;
-//    String label = (space > 0)? text.substring(space+1) : text;
-//
-//    // analyse spec
-//    String p = getLinkPackage(tag);
-//    String c = getClassName(tag);
-//    String m = getLinkMember(tag);
-//
-//    // generate HTML link
-//    StringBuilder html = new StringBuilder();
-//    html.append("<a href=\"").append(spec).append("\" title=\"").append(label).append('"');
-//    html.append(" class=\"").append(css).append('"');
-//    html.append(" data-package=\"").append(p).append('"');
-//    html.append(" data-class=\"").append(c).append('"');
-//    if (m != null) {
-//      html.append(" data-method=\"").append(m).append('"');
-//    }
-//    html.append('>').append(label).append("</a>");
-//    return html.toString();
-//  }
+    }
+    return name;
+  }
+
+  /**
+   * @param tag The tag to analyse
+   * @return the member component of the tag.
+   */
+  private static String getLinkMember(LinkTree tag) {
+    String spec = getLinkSpec(tag);
+    int hash = spec.indexOf('#');
+    return hash >= 0? spec.substring(hash+1) : null;
+  }
+
+  /**
+   * Returns the HTML link from the specified tag
+   *
+   * @param tag the tag to process.
+   * @param css the css class.
+   * @return the corresponding HTML
+   */
+  public static String toLinkString(LinkTree tag, String css) {
+    // extract spec and label
+    // TODO Extract content
+    String text = tag.getLabel().toString();
+    int space = text.indexOf(' ');
+    String spec  = (space > 0)? text.substring(0, space) : text;
+    String label = (space > 0)? text.substring(space+1) : text;
+
+    // analyse spec
+    String p = getLinkPackage(tag);
+    String c = getClassName(tag);
+    String m = getLinkMember(tag);
+
+    // generate HTML link
+    StringBuilder html = new StringBuilder();
+    html.append("<a href=\"").append(spec).append("\" title=\"").append(label).append('"');
+    html.append(" class=\"").append(css).append('"');
+    html.append(" data-package=\"").append(p).append('"');
+    html.append(" data-class=\"").append(c).append('"');
+    if (m != null) {
+      html.append(" data-method=\"").append(m).append('"');
+    }
+    html.append('>').append(label).append("</a>");
+    return html.toString();
+  }
 }

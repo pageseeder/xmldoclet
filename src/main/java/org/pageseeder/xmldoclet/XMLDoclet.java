@@ -19,6 +19,7 @@ import com.sun.source.doctree.*;
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Reporter;
+import jdk.javadoc.doclet.Taglet;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
@@ -187,24 +188,23 @@ public final class XMLDoclet implements Doclet {
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
    *
-   * @param doc The package to transform.
+   * @param packageElement The package packageElement to process.
    */
-  private XMLNode toPackageNode(PackageElement doc) {
-    XMLNode node = new XMLNode("package", doc);
+  private XMLNode toPackageNode(PackageElement packageElement) {
+    XMLNode node = new XMLNode("package", packageElement);
 
     // Core attributes
-    node.attribute("unnamed", doc.isUnnamed());
-    node.attribute("name", doc.getQualifiedName().toString());
+    node.attribute("name", packageElement.getQualifiedName().toString());
+    node.attribute("unnamed", packageElement.isUnnamed());
 
     // Comment
-    // TODO
-//    node.child(toComment(doc));
+    node.child(toComment(packageElement));
 
     // Child nodes
-    node.child(toAnnotationsNode(doc.getAnnotationMirrors()));
-    node.child(toStandardTags(doc));
-    node.child(toTags(doc));
-    node.child(toSeeNodes(doc));
+    node.child(toAnnotationsNode(packageElement.getAnnotationMirrors()));
+    node.child(toStandardTags(packageElement));
+    node.child(toTags(packageElement));
+    node.child(toSeeNodes(packageElement));
 
     return node;
   }
@@ -212,34 +212,34 @@ public final class XMLDoclet implements Doclet {
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
    *
-   * @param classDoc The class to transform.
+   * @param typeElement The class to transform.
    */
-  private XMLNode toClassNode(TypeElement classDoc) {
-    XMLNode node = new XMLNode("class", classDoc);
+  private XMLNode toClassNode(TypeElement typeElement) {
+    XMLNode node = new XMLNode("class", typeElement);
 
     Elements elements = this.env.getElementUtils();
 
     // Core attributes
-    node.attribute("type", classDoc.getSimpleName().toString());
-    node.attribute("fulltype", classDoc.getQualifiedName().toString());
-    node.attribute("name", classDoc.getQualifiedName().toString());
-    node.attribute("package", elements.getPackageOf(classDoc).toString());
-    node.attribute("visibility", getVisibility(classDoc));
-    node.attribute("kind", classDoc.getKind().toString().toLowerCase());
+    node.attribute("type", typeElement.getSimpleName().toString());
+    node.attribute("fulltype", typeElement.getQualifiedName().toString());
+    node.attribute("name", typeElement.getQualifiedName().toString());
+    node.attribute("package", elements.getPackageOf(typeElement).toString());
+    node.attribute("visibility", getVisibility(typeElement));
+    node.attribute("kind", typeElement.getKind().toString().toLowerCase());
     // TODO flag nested classes
-//    node.attribute("nesting-kind", classDoc.getNestingKind().toString().toLowerCase());
+//    node.attribute("nesting-kind", typeElement.getNestingKind().toString().toLowerCase());
 
     // Class properties
-    Set<Modifier> modifiers = classDoc.getModifiers();
+    Set<Modifier> modifiers = typeElement.getModifiers();
     node.attribute("final", modifiers.contains(Modifier.FINAL));
     node.attribute("abstract", modifiers.contains(Modifier.ABSTRACT));
-    node.attribute("serializable", isSerializable(classDoc));
+    node.attribute("serializable", isSerializable(typeElement));
     // TODO Deprecate (use `kind` instead)
-    node.attribute("interface", classDoc.getKind() == ElementKind.INTERFACE);
-    node.attribute("enum", classDoc.getKind() == ElementKind.ENUM);
+    node.attribute("interface", typeElement.getKind() == ElementKind.INTERFACE);
+    node.attribute("enum", typeElement.getKind() == ElementKind.ENUM);
 
     // Interfaces
-    List<? extends TypeMirror> interfaces = classDoc.getInterfaces();
+    List<? extends TypeMirror> interfaces = typeElement.getInterfaces();
     if (interfaces.size() > 0) {
       XMLNode implement = new XMLNode("implements");
       for (TypeMirror type : interfaces) {
@@ -252,15 +252,15 @@ public final class XMLDoclet implements Doclet {
     }
 
     // Superclass
-    if (classDoc.getSuperclass() != null) {
-      TypeMirror superclass = classDoc.getSuperclass();
-      if (classDoc.getKind() == ElementKind.CLASS) {
+    if (typeElement.getSuperclass() != null) {
+      TypeMirror superclass = typeElement.getSuperclass();
+      if (typeElement.getKind() == ElementKind.CLASS) {
         if (!"java.lang.Object".equals(superclass.toString())) {
           node.attribute("superclass", superclass.toString()); // i.name()
 //          node.attribute("superclassfulltype", superclass.toString()); // i.qualifiedName()
         }
-      } else if (classDoc.getKind() == ElementKind.ENUM) {
-        String defaultEnumSuperclass = "java.lang.Enum<" + classDoc.getQualifiedName() + ">";
+      } else if (typeElement.getKind() == ElementKind.ENUM) {
+        String defaultEnumSuperclass = "java.lang.Enum<" + typeElement.getQualifiedName() + ">";
         if (!defaultEnumSuperclass.equals(superclass.toString())) {
           node.attribute("superclass", superclass.toString()); // i.name()
 //        node.attribute("superclassfulltype", superclass.toString()); // i.qualifiedName()
@@ -269,19 +269,19 @@ public final class XMLDoclet implements Doclet {
     }
 
     // Comment
-    node.child(toComment(classDoc));
+    node.child(toComment(typeElement));
 
     // Other child nodes
-    node.child(toAnnotationsNode(classDoc.getAnnotationMirrors()));
-    node.child(toStandardTags(classDoc));
-//    node.child(toTags(classDoc));
-    node.child(toSeeNodes(classDoc));
-    node.child(toFieldsNode(classDoc));
-    node.child(toConstructorsNode(classDoc));
-    node.child(toMethods(classDoc));
+    node.child(toAnnotationsNode(typeElement.getAnnotationMirrors()));
+    node.child(toStandardTags(typeElement));
+//    node.child(toTags(typeElement));
+    node.child(toSeeNodes(typeElement));
+    node.child(toFieldsNode(typeElement));
+    node.child(toConstructorsNode(typeElement));
+    node.child(toMethods(typeElement));
 
     // Handle inner classes
-//    for (ClassDoc inner : classDoc.innerClasses()) {
+//    for (ClassDoc inner : typeElement.innerClasses()) {
 //      node.child(toClassNode(inner));
 //    }
 
@@ -439,12 +439,13 @@ public final class XMLDoclet implements Doclet {
 
     // Handle the tags
     if (commentTree != null) {
+
       for (DocTree tag : commentTree.getBlockTags()) {
-        // TODO
-//      Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
-//      if (taglet instanceof BlockTag) {
-//        nodes.add(((BlockTag) taglet).toXMLNode(tag));
-//      }
+        BlockTagTree block = (BlockTagTree) tag;
+        Taglet taglet = this.options.getTagletForName(block.getTagName());
+        if (taglet instanceof BlockTag) {
+          nodes.add(((BlockTag) taglet).toXMLNode(tag));
+        }
       }
     }
 
@@ -556,7 +557,6 @@ public final class XMLDoclet implements Doclet {
     return nodes;
   }
 
-
   private static XMLNode toAnnotationsNode(List<? extends AnnotationMirror> annotations) {
     if (annotations.isEmpty()) return null;
     XMLNode node = new XMLNode("annotations");
@@ -623,7 +623,8 @@ public final class XMLDoclet implements Doclet {
     node.attribute("type", toSimpleType(parameter.asType()));
     node.attribute("fulltype", parameter.asType().toString());
     if (comment != null) {
-      node.text(toCommentText(comment));
+      String markup = Markup.asString(comment.getDescription(), this.options, false);
+      node.text(markup);
     }
     return node;
   }
@@ -639,9 +640,9 @@ public final class XMLDoclet implements Doclet {
     node.attribute("type", toSimpleType(exception));
     node.attribute("fulltype", exception.toString());
     if (throwsTree != null) {
-      // TODO
-//      node.attribute("comment", tag.exceptionComment());
-//      node.text(toComment(tag));
+      node.attribute("comment", throwsTree.getDescription().toString());
+      String markup = Markup.asString(throwsTree.getDescription(), this.options, false);
+      node.text(markup);
     }
     return node;
   }
@@ -655,64 +656,9 @@ public final class XMLDoclet implements Doclet {
     DocCommentTree commentTree = this.env.getDocTrees().getDocCommentTree(element);
     if (commentTree == null || commentTree.toString().isEmpty()) return null;
     XMLNode node = new XMLNode("comment", element, -1); // TODO doc.position().line()
-    StringBuilder comment = new StringBuilder();
-
-    // Analyse each token and produce comment node
-    // TODO
-//    for (Tag t : doc.inlineTags()) {
-//      Taglet taglet = options.getTagletForName(t.name());
-//      if (taglet != null) {
-//        comment.append(taglet.toString(t));
-//      } else {
-//        comment.append(t.text());
-//      }
-//    }
-
-    return node.text(comment.toString());
+    String markup = Markup.asString(commentTree.getFullBody(), this.options, true);
+    return node.text(markup);
   }
-
-  /**
-   * Transforms comments on the Doc object into XML.
-   */
-  private static String toCommentText(DocCommentTree tree) {
-    if (tree == null || tree.toString().isEmpty()) return null;
-    StringBuilder comment = new StringBuilder();
-
-    // Analyse each token and produce comment node
-//    for (Tag t : tag.inlineTags()) {
-//      Taglet taglet = options.getTagletForName(t.name());
-//      if (taglet != null) {
-//        comment.append(taglet.toString(t));
-//      } else {
-//        comment.append(t.text());
-//      }
-//    }
-
-    return comment.toString();
-  }
-
-  /**
-   * Transforms comments on the Doc object into XML.
-   */
-  private static String toCommentText(DocTree tree) {
-    if (tree == null || tree.toString().isEmpty()) return null;
-    StringBuilder comment = new StringBuilder();
-    // TODO
-    comment.append(tree);
-
-    // Analyse each token and produce comment node
-//    for (Tag t : tag.inlineTags()) {
-//      Taglet taglet = options.getTagletForName(t.name());
-//      if (taglet != null) {
-//        comment.append(taglet.toString(t));
-//      } else {
-//        comment.append(t.text());
-//      }
-//    }
-
-    return comment.toString();
-  }
-
 
   /**
    * @return an "annotation" XML node for the annotation.
@@ -782,6 +728,7 @@ public final class XMLDoclet implements Doclet {
     if (modifiers.contains(Modifier.PRIVATE)) return "private";
     if (modifiers.contains(Modifier.PROTECTED)) return "protected";
     if (modifiers.contains(Modifier.PUBLIC)) return "public";
+    // TODO this might not be the correct default...
     return "package-private";
   }
 
@@ -791,15 +738,6 @@ public final class XMLDoclet implements Doclet {
       if ("java.io.Serializable".equals(i.toString())) return true;
     }
     return false;
-  }
-
-  private static String getPackageName(TypeElement element) {
-    Element top = element.getEnclosingElement();
-    // TODO handle nested classes
-    if (element.getNestingKind() == NestingKind.TOP_LEVEL) {
-      return top.toString();
-    }
-    return "";
   }
 
   /**

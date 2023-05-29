@@ -321,7 +321,7 @@ public final class XMLNode {
    * @param in The input string.
    * @return The encoded string.
    */
-  private static String encodeElement(String in) {
+  protected static String encodeElement(String in) {
     final int length = in.length();
     StringBuilder out = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
@@ -341,7 +341,7 @@ public final class XMLNode {
    * @param in The input string.
    * @return The encoded string.
    */
-  private static String encodeAttribute(String in) {
+  protected static String encodeAttribute(String in) {
     final int length = in.length();
     StringBuilder out = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
