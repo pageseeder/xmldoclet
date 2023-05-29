@@ -9,7 +9,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Filter classes extending the specified class.
+ * Option to filter classes extending the specified class.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
  */
 public class ExtendsOption extends XMLDocletOptionBase {
 
@@ -65,8 +68,12 @@ public class ExtendsOption extends XMLDocletOptionBase {
    *
    * @param element the class element
    * @return <code>true</code> if the class should be included; <code>false</code> otherwise.
+   *
+   * @see <a href="https://example.org">Example!</a>
+   *
+   * @throws NullPointerException Something <b>xxx</b>
    */
-  public boolean matches(TypeElement element) {
+  public boolean matches(TypeElement element) throws NullPointerException {
     if (this.superclasses.isEmpty()) return true;
     TypeMirror superclass = element.getSuperclass();
     return superclass != null && this.superclasses.contains(superclass.toString());

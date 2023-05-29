@@ -1,8 +1,6 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
-import jdk.jfr.Experimental;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -11,12 +9,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Filter classes with the specified annotation.
+ * Option to filter classes with the specified annotation.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
  */
-@Experimental
-public class AnnotatedOption extends XMLDocletOptionBase {
+public final class AnnotatedOption extends XMLDocletOptionBase {
 
-  private List<String> annotations = new ArrayList<>();
+  private final List<String> annotations = new ArrayList<>();
 
   public AnnotatedOption(Reporter reporter) {
     super(reporter);

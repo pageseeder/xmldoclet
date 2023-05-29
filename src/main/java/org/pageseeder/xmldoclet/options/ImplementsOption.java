@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Filter classes implementing the specified class.
+ * Option to filter classes implementing the specified class.
  */
 public class ImplementsOption extends XMLDocletOptionBase {
 

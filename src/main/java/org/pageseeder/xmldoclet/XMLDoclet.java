@@ -15,20 +15,22 @@
  */
 package org.pageseeder.xmldoclet;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import com.sun.source.util.DocTrees;
+import com.sun.source.doctree.*;
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Reporter;
 
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * The Doclet implementation to use with javadoc.
@@ -52,6 +54,11 @@ public final class XMLDoclet implements Doclet {
    */
   private Options options;
 
+  /**
+   * The doclet environment provided by the run method.
+   */
+  private DocletEnvironment env;
+
   @Override
   public void init(Locale locale, Reporter reporter) {
     reporter.print(Diagnostic.Kind.NOTE, "Doclet using locale: " + locale);
@@ -62,14 +69,29 @@ public final class XMLDoclet implements Doclet {
   /**
    * Processes the JavaDoc documentation.
    *
-   * @param docEnv the DocletEnvironment
+   * @param env the DocletEnvironment
    *
    * @return <code>true</code> if processing was successful.
    */
   @Override
-  public boolean run(DocletEnvironment docEnv) {
-    // Create the root node.
-    List<XMLNode> nodes = toXMLNodes(docEnv);
+  public boolean run(DocletEnvironment env) {
+    this.env = env;
+    List<XMLNode> nodes = new ArrayList<>();
+
+    // Iterate over elements
+    for (TypeElement element : ElementFilter.typesIn(this.env.getIncludedElements())) {
+      // Apply the filters from options
+      if (this.options.filter(element)) {
+        nodes.add(toClassNode(element));
+      }
+    }
+
+    // Iterate over packages
+    if (!options.hasFilter()) {
+      for (PackageElement element : ElementFilter.packagesIn(this.env.getIncludedElements())) {
+        nodes.add(toPackageNode(element));
+      }
+    }
 
     // Save the output XML
     save(nodes);
@@ -99,7 +121,8 @@ public final class XMLDoclet implements Doclet {
   /**
    * Save the given array of nodes.
    *
-   * Will either save the files individually, or as a single file depending on the existence of the "-multiple" flag.
+   * <p>Will either save the files individually, or as a single file depending on whether the
+   * "-multiple" flag is used or not.
    *
    * @param nodes The array of nodes to be saved.
    */
@@ -110,17 +133,17 @@ public final class XMLDoclet implements Doclet {
     meta.attribute("created", df.format(new Date()));
 
     // Multiple files
-    if (options.useMultipleFiles()) {
+    if (this.options.useMultipleFiles()) {
       for (XMLNode node : nodes) {
-        File dir = options.getDirectory();
+        File dir = this.options.getDirectory();
         String name = node.getAttribute("name");
-        if (options.useSubFolders()) {
+        if (this.options.useSubFolders()) {
           name = name.replace('.', '/');
           int x = name.lastIndexOf('/');
           if (x >= 0) {
-            dir = new File(dir, name.substring(0,x));
+            dir = new File(dir, name.substring(0, x));
             dir.mkdirs();
-            name = name.substring(x+1);
+            name = name.substring(x + 1);
           }
         }
         XMLNode root = new XMLNode("root");
@@ -128,7 +151,7 @@ public final class XMLDoclet implements Doclet {
         root.child(meta);
         root.child(node);
         String fileName = name + ".xml";
-        root.save(dir, fileName, options.getEncoding(), "");
+        root.save(dir, fileName, this.options.getEncoding(), "");
       }
       // Index
       XMLNode root = new XMLNode("root");
@@ -136,7 +159,7 @@ public final class XMLDoclet implements Doclet {
       root.child(meta);
       for (XMLNode node : nodes) {
         String name = node.getAttribute("name");
-        if (options.useSubFolders()) {
+        if (this.options.useSubFolders()) {
           name = name.replace('.', '/');
         }
         XMLNode ref = new XMLNode(node.getName());
@@ -145,9 +168,9 @@ public final class XMLDoclet implements Doclet {
         root.child(ref);
       }
       String fileName = "index.xml";
-      root.save(options.getDirectory(), fileName, options.getEncoding(), "");
+      root.save(this.options.getDirectory(), fileName, this.options.getEncoding(), "");
 
-    // Single file
+      // Single file
     } else {
       // Wrap the XML
       XMLNode root = new XMLNode("root");
@@ -156,74 +179,35 @@ public final class XMLDoclet implements Doclet {
       for (XMLNode node : nodes) {
         root.child(node);
       }
-      root.save(options.getDirectory(), options.getFilename(), options.getEncoding(), "");
+      root.save(this.options.getDirectory(), this.options.getFilename(), this.options.getEncoding(), "");
     }
 
   }
 
   /**
-   * Returns the XML nodes for all the selected classes in the specified RootDoc.
+   * Returns the XML node corresponding to the specified ClassDoc.
    *
-   * @param env The doclet environment
-   * @return The list of XML nodes which represents the RootDoc.
+   * @param doc The package to transform.
    */
-  private List<XMLNode> toXMLNodes(DocletEnvironment env) {
-    List<XMLNode> nodes = new ArrayList<>();
+  private XMLNode toPackageNode(PackageElement doc) {
+    XMLNode node = new XMLNode("package", doc);
 
-    // get the DocTrees utility class to access document comments
-    DocTrees docTrees = env.getDocTrees();
+    // Core attributes
+    node.attribute("unnamed", doc.isUnnamed());
+    node.attribute("name", doc.getSimpleName().toString());
 
-    // Iterate over elements
-    for (TypeElement element : ElementFilter.typesIn(env.getIncludedElements())) {
-
-      // Apply the filters from options
-      if (this.options.filter(element)) {
-        System.out.println(element.getKind() + ":" + element);
-        nodes.add(toClassNode(element));
-      }
-
-//      for (Element e : t.getEnclosedElements()) {
-//        DocCommentTree docCommentTree = docTrees.getDocCommentTree(e);
-//        if (docCommentTree != null) {
-//          System.out.println("Element (" + e.getKind() + ": " + e + ") has the following comments:");
-//          System.out.println(" +-Entire body: " + docCommentTree.getFullBody());
-//          System.out.println(" +-Block tags: " + docCommentTree.getBlockTags());
-//        }
-//      }
-    }
-
-//    // Iterate over packages
-//    if (!options.hasFilter()) {
-//      for (PackageDoc doc : root.specifiedPackages()) {
-//        nodes.add(toPackageNode(doc));
-//      }
-//    }
-
-    return nodes;
-  }
-//
-//  /**
-//   * Returns the XML node corresponding to the specified ClassDoc.
-//   *
-//   * @param doc The package to transform.
-//   */
-//  private static XMLNode toPackageNode(PackageDoc doc) {
-//    XMLNode node = new XMLNode("package", doc);
-//
-//    // Core attributes
-//    node.attribute("name", doc.name());
-//
-//    // Comment
+    // Comment
+    // TODO
 //    node.child(toComment(doc));
-//
-//    // Child nodes
-//    node.child(toAnnotationsNode(doc.annotations()));
-//    node.child(toStandardTags(doc));
-//    node.child(toTags(doc));
-//    node.child(toSeeNodes(doc.seeTags()));
-//
-//    return node;
-//  }
+
+    // Child nodes
+    node.child(toAnnotationsNode(doc.getAnnotationMirrors()));
+    node.child(toStandardTags(doc));
+    node.child(toTags(doc));
+    node.child(toSeeNodes(doc));
+
+    return node;
+  }
 
   /**
    * Returns the XML node corresponding to the specified ClassDoc.
@@ -231,52 +215,70 @@ public final class XMLDoclet implements Doclet {
    * @param classDoc The class to transform.
    */
   private XMLNode toClassNode(TypeElement classDoc) {
-     XMLNode node = new XMLNode("class", classDoc);
+    XMLNode node = new XMLNode("class", classDoc);
+
+    Elements elements = this.env.getElementUtils();
 
     // Core attributes
-//    node.attribute("type",       classDoc.name());
-//    node.attribute("fulltype",   classDoc.qualifiedName());
-//    node.attribute("name",       classDoc.qualifiedName());
-//    node.attribute("package",    classDoc.containingPackage().name());
-//    node.attribute("visibility", getVisibility(classDoc));
-
-    // Interfaces
-//    ClassDoc[] interfaces = classDoc.interfaces();
-//    if (interfaces.length > 0) {
-//      XMLNode implement = new XMLNode("implements");
-//      for (ClassDoc i : interfaces) {
-//        XMLNode interfce = new XMLNode("interface");
-//        interfce.attribute("type", i.name());
-//        interfce.attribute("fulltype", i.qualifiedName());
-//        implement.child(interfce);
-//      }
-//      node.child(implement);
-//    }
-
-    // Superclass
-//    if (classDoc.superclass() != null) {
-//      node.attribute("superclass", classDoc.superclass().name());
-//      node.attribute("superclassfulltype", classDoc.superclass().qualifiedName());
-//    }
+    node.attribute("type", classDoc.getSimpleName().toString());
+    node.attribute("fulltype", classDoc.getQualifiedName().toString());
+    node.attribute("name", classDoc.getQualifiedName().toString());
+    node.attribute("package", elements.getPackageOf(classDoc).toString());
+    node.attribute("visibility", getVisibility(classDoc));
+    node.attribute("kind", classDoc.getKind().toString().toLowerCase());
+    // TODO flag nested classes
+//    node.attribute("nesting-kind", classDoc.getNestingKind().toString().toLowerCase());
 
     // Class properties
-//    node.attribute("interface",    classDoc.isInterface());
-//    node.attribute("final",        classDoc.isFinal());
-//    node.attribute("abstract",     classDoc.isAbstract());
-//    node.attribute("serializable", classDoc.isSerializable());
-//    node.attribute("enum",         classDoc.isEnum());
+    Set<Modifier> modifiers = classDoc.getModifiers();
+    node.attribute("final", modifiers.contains(Modifier.FINAL));
+    node.attribute("abstract", modifiers.contains(Modifier.ABSTRACT));
+    node.attribute("serializable", isSerializable(classDoc));
+    // TODO Deprecate (use `kind` instead)
+    node.attribute("interface", classDoc.getKind() == ElementKind.INTERFACE);
+    node.attribute("enum", classDoc.getKind() == ElementKind.ENUM);
+
+    // Interfaces
+    List<? extends TypeMirror> interfaces = classDoc.getInterfaces();
+    if (interfaces.size() > 0) {
+      XMLNode implement = new XMLNode("implements");
+      for (TypeMirror type : interfaces) {
+        XMLNode interfce = new XMLNode("interface");
+        interfce.attribute("type", toSimpleType(type)); // i.name()
+        interfce.attribute("fulltype", type.toString()); // i.qualifiedName()
+        implement.child(interfce);
+      }
+      node.child(implement);
+    }
+
+    // Superclass
+    if (classDoc.getSuperclass() != null) {
+      TypeMirror superclass = classDoc.getSuperclass();
+      if (classDoc.getKind() == ElementKind.CLASS) {
+        if (!"java.lang.Object".equals(superclass.toString())) {
+          node.attribute("superclass", superclass.toString()); // i.name()
+//          node.attribute("superclassfulltype", superclass.toString()); // i.qualifiedName()
+        }
+      } else if (classDoc.getKind() == ElementKind.ENUM) {
+        String defaultEnumSuperclass = "java.lang.Enum<" + classDoc.getQualifiedName() + ">";
+        if (!defaultEnumSuperclass.equals(superclass.toString())) {
+          node.attribute("superclass", superclass.toString()); // i.name()
+//        node.attribute("superclassfulltype", superclass.toString()); // i.qualifiedName()
+        }
+      }
+    }
 
     // Comment
-//    node.child(toComment(classDoc));
+    node.child(toComment(classDoc));
 
     // Other child nodes
-//    node.child(toAnnotationsNode(classDoc.annotations()));
-//    node.child(toStandardTags(classDoc));
+    node.child(toAnnotationsNode(classDoc.getAnnotationMirrors()));
+    node.child(toStandardTags(classDoc));
 //    node.child(toTags(classDoc));
-//    node.child(toSeeNodes(classDoc.seeTags()));
-//    node.child(toFieldsNode(classDoc.fields()));
-//    node.child(toConstructorsNode(classDoc.constructors()));
-//    node.child(toMethods(classDoc.methods()));
+    node.child(toSeeNodes(classDoc));
+    node.child(toFieldsNode(classDoc));
+    node.child(toConstructorsNode(classDoc));
+    node.child(toMethods(classDoc));
 
     // Handle inner classes
 //    for (ClassDoc inner : classDoc.innerClasses()) {
@@ -286,178 +288,196 @@ public final class XMLDoclet implements Doclet {
     return node;
   }
 
-//  /**
-//   * Returns the specified field as an XML node.
-//   *
-//   * @param field A field.
-//   * @return The corresponding node.
-//   */
-//  private static XMLNode toFieldNode(FieldDoc field) {
-//    // Create the <field> node and populate it.
-//    XMLNode node = new XMLNode("field");
-//    node.attribute("name", field.name());
-//    node.attribute("type", field.type().typeName());
-//    node.attribute("fulltype", field.type().toString());
-//
+  /**
+   * Returns the specified field as an XML node.
+   *
+   * @param field A field.
+   *
+   * @return The corresponding node.
+   */
+  private XMLNode toFieldNode(VariableElement field) {
+    // Create the <field> node and populate it.
+    XMLNode node = new XMLNode("field");
+    node.attribute("name", field.getSimpleName().toString());
+    node.attribute("type", toSimpleType(field.asType()));
+    node.attribute("fulltype", field.asType().toString());
+
+    // TODO
 //    if (field.constantValue() != null && field.constantValue().toString().length() > 0) {
 //      node.attribute("const", field.constantValue().toString());
 //    }
-//
 //    if (field.constantValueExpression() != null && field.constantValueExpression().length() > 0) {
 //      node.attribute("constexpr", field.constantValueExpression());
 //    }
-//
-//    node.attribute("static", field.isStatic());
-//    node.attribute("final", field.isFinal());
-//    node.attribute("transient", field.isTransient());
-//    node.attribute("volatile", field.isVolatile());
-//    node.attribute("visibility", getVisibility(field));
-//
-//    // Comment
-//    node.child(toComment(field));
-//
-//    // Other child nodes
-//    node.child(toStandardTags(field));
-//    node.child(toTags(field));
-//    node.child(toSeeNodes(field.seeTags()));
-//
-//    return node;
-//  }
-//
-//  /**
-//   * Returns the .
-//   *
-//   * @param constructors The constructors.
-//   * @param node The node to add the XML to.
-//   */
-//  private static XMLNode toConstructorsNode(ConstructorDoc[] constructors) {
-//    if (constructors.length < 1) return null;
-//
-//    // Create the <constructors> node
-//    XMLNode node = new XMLNode("constructors");
-//
-//    // Add the <constructor> nodes
-//    for (ConstructorDoc  constructor : constructors) {
-//      XMLNode c = new XMLNode("constructor");
-//      updateExecutableMemberNode(constructor, c);
-//      node.child(c);
-//    }
-//
-//    return node;
-//  }
-//
-//  /**
-//   * Transforms an array of methods and an array of constructor methods into XML and adds those to the host node.
-//   *
-//   * @param methods The methods.
-//   * @param constructors The constructors.
-//   * @param node The node to add the XML to.
-//   */
-//  private static XMLNode toMethods(MethodDoc[] methods) {
-//    if (methods.length < 1) return null;
-//
-//    // Create the <methods> node
-//    XMLNode node = new XMLNode("methods");
-//
-//    // Add the <method> nodes
-//    for (MethodDoc method : methods) {
-//      XMLNode methodNode = new XMLNode("method");
-//
-//      updateExecutableMemberNode(method, methodNode);
-//
-//      methodNode.attribute("type",     method.returnType().typeName());
-//      methodNode.attribute("fulltype", method.returnType().toString());
-//      methodNode.attribute("abstract", method.isAbstract());
-//
+
+    Set<Modifier> modifiers = field.getModifiers();
+    node.attribute("static", modifiers.contains(Modifier.STATIC));
+    node.attribute("final", modifiers.contains(Modifier.FINAL));
+    node.attribute("transient", modifiers.contains(Modifier.TRANSIENT));
+    node.attribute("volatile", modifiers.contains(Modifier.VOLATILE));
+    node.attribute("visibility", getVisibility(field));
+
+    // Comment
+// TODO    node.child(toComment(field));
+
+    // Other child nodes
+    node.child(toStandardTags(field));
+// TODO   node.child(toTags(field));
+    node.child(toSeeNodes(field));
+
+    return node;
+  }
+
+  private XMLNode toConstructorsNode(TypeElement element) {
+    List<ExecutableElement> constructors = ElementFilter.constructorsIn(element.getEnclosedElements());
+    if (constructors.isEmpty()) return null;
+
+    // Create the <constructors> node
+    XMLNode node = new XMLNode("constructors");
+
+    // Add the <constructor> nodes
+    for (ExecutableElement constructor : constructors) {
+      XMLNode c = new XMLNode("constructor");
+      processExecutableElement(constructor, c);
+      node.child(c);
+    }
+
+    return node;
+  }
+
+  /**
+   * Transforms an array of methods and an array of constructor methods into XML and adds those to the host node.
+   */
+  private XMLNode toMethods(TypeElement element) {
+    List<ExecutableElement> methods = ElementFilter.methodsIn(element.getEnclosedElements());
+    if (methods.isEmpty()) return null;
+
+    // Create the <methods> node
+    XMLNode node = new XMLNode("methods");
+
+    // Add the <method> nodes
+    for (ExecutableElement method : methods) {
+      XMLNode methodNode = new XMLNode("method");
+
+      processExecutableElement(method, methodNode);
+
+      Set<Modifier> modifiers = method.getModifiers();
+      TypeMirror returnType = method.getReturnType();
+
+      methodNode.attribute("type", toSimpleType(returnType)); // TODO typeName()
+      methodNode.attribute("fulltype", returnType.toString());
+      methodNode.attribute("abstract", modifiers.contains(Modifier.ABSTRACT));
+
 //      Tag[] returnTags = method.tags("@return");
 //      if (returnTags.length > 0) {
 //        node.text(toComment(returnTags[0]));
 //      }
-//
-//      node.child(methodNode);
-//    }
-//
-//    return node;
-//  }
-//
-//  /**
-//   * Returns the fields node.
-//   *
-//   * @param fields The set of fields.
-//   * @return the fields or <code>null</code> if none.
-//   */
-//  private static XMLNode toFieldsNode(FieldDoc[] fields) {
-//    if (fields.length < 1) return null;
-//    // Iterate over the fields
-//    XMLNode node = new XMLNode("fields");
-//    for (FieldDoc field : fields) {
-//      node.child(toFieldNode(field));
-//    }
-//    return node;
-//  }
-//
-//  /**
-//   * Set the commons attribute and child nodes for method and constructor nodes.
-//   *
-//   * @param member The executable member documentation.
-//   * @param node The node to update
-//   */
-//  private static void updateExecutableMemberNode(ExecutableMemberDoc member, XMLNode node) {
-//    // Add the basic attribute values
-//    node.attribute("name",         member.name());
-//    node.attribute("static",       member.isStatic());
-//    node.attribute("interface",    member.isInterface());
-//    node.attribute("final",        member.isFinal());
-//    node.attribute("visibility",   getVisibility(member));
-//    node.attribute("synchronized", member.isSynchronized());
-//    node.attribute("synthetic",    member.isSynthetic());
-//
-//    // Comment
-//    node.child(toComment(member));
-//
-//    // Other objects attached to the method/constructor.
-//    node.child(toTags(member));
-//    node.child(toSeeNodes(member.seeTags()));
-//    node.child(toParametersNode(member.parameters(),       member.paramTags()));
-//    node.child(toExceptionsNode(member.thrownExceptions(), member.throwsTags()));
-//  }
-//
-//  /**
-//   * Transforms common tags on the Doc object into XML.
-//   *
-//   * @param doc The Doc object.
-//   * @return The corresponding list of nodes.
-//   */
-//  private static List<XMLNode> toStandardTags(Doc doc) {
-//    // Create the comment node
-//    List<XMLNode> nodes = new ArrayList<XMLNode>();
-//
-//    // Handle the tags
-//    for (Tag tag : doc.tags()) {
+
+      node.child(methodNode);
+    }
+
+    return node;
+  }
+
+  /**
+   * Returns the fields node.
+   *
+   * @param element The class
+   *
+   * @return the fields or <code>null</code> if none.
+   */
+  private XMLNode toFieldsNode(TypeElement element) {
+    List<VariableElement> fields = ElementFilter.fieldsIn(element.getEnclosedElements());
+    if (fields.isEmpty()) return null;
+    // Iterate over the fields
+    XMLNode node = new XMLNode("fields");
+    for (VariableElement field : fields) {
+      node.child(toFieldNode(field));
+    }
+    return node;
+  }
+
+  /**
+   * Set the commons attribute and child nodes for method and constructor nodes.
+   *
+   * @param member The executable member documentation.
+   * @param node   The node to update
+   */
+  private void processExecutableElement(ExecutableElement member, XMLNode node) {
+    Set<Modifier> modifiers = member.getModifiers();
+
+    // Add the basic attribute values
+    node.attribute("name", member.getSimpleName().toString());
+    node.attribute("static", modifiers.contains(Modifier.STATIC));
+// TODO    node.attribute("interface",    member.isInterface());
+    node.attribute("final", modifiers.contains(Modifier.FINAL));
+    node.attribute("visibility", getVisibility(member));
+    node.attribute("synchronized", modifiers.contains(Modifier.SYNCHRONIZED));
+// TODO    node.attribute("synthetic",    member.isSynthetic());
+
+    // Comment
+    node.child(toComment(member));
+
+    // Other objects attached to the method/constructor.
+    node.child(toTags(member));
+    node.child(toSeeNodes(member));
+    node.child(toParametersNode(member));
+    node.child(toExceptionsNode(member));
+  }
+
+  /**
+   * Transforms common tags on the Doc object into XML.
+   *
+   * @param element The element to document.
+   *
+   * @return The corresponding list of nodes.
+   */
+  private List<XMLNode> toStandardTags(Element element) {
+    // Create the comment node
+    List<XMLNode> nodes = new ArrayList<>();
+    DocCommentTree commentTree = this.env.getDocTrees().getDocCommentTree(element);
+
+    // Handle the tags
+    if (commentTree != null) {
+      for (DocTree tag : commentTree.getBlockTags()) {
+        // TODO
 //      Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
 //      if (taglet instanceof BlockTag) {
 //        nodes.add(((BlockTag) taglet).toXMLNode(tag));
 //      }
+      }
+    }
+
+    // Add the node to the host
+    return nodes;
+  }
+
+  /**
+   * Transforms comments on the Doc object into XML.
+   */
+  private XMLNode toTags(Element element) {
+    DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(element);
+    if (comment == null) return null;
+    List<? extends DocTree> blockTags = comment.getBlockTags();
+
+    // TODO Handle tags
+//    System.out.println(element.getSimpleName() + ":");
+//    List<? extends DocTree> fullbody = comment.getFullBody();
+//    System.out.println(element.getKind() + ":" + element.getSimpleName());
+//    for (DocTree tree : fullbody) {
+//      System.out.println("__" + tree.getKind() + ":" + tree.toString());
 //    }
-//
-//    // Add the node to the host
-//    return nodes;
-//  }
-//
-//  /**
-//   * Transforms comments on the Doc object into XML.
-//   *
-//   * @param doc The Doc object.
-//   * @param node The node to add the comment nodes to.
-//   */
-//  private static XMLNode toTags(Doc doc) {
-//    // Create the comment node
-//    XMLNode node = new XMLNode("tags");
-//
-//    boolean hasTags = false;
-//
-//    // Handle the tags
-//    for (Tag tag : doc.tags()) {
+//    for (DocTree tree : blockTags) {
+//      System.out.println("~~" + tree.getKind() + ":" + tree.toString());
+//    }
+
+    // Create the comment node
+    XMLNode node = new XMLNode("tags");
+
+    boolean hasTags = false;
+
+    // Handle the tags
+    for (DocTree tag : blockTags) {
 //      Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
 //      if (taglet != null && !(taglet instanceof BlockTag)) {
 //        XMLNode tNode = new XMLNode("tag");
@@ -466,108 +486,102 @@ public final class XMLDoclet implements Doclet {
 //        node.child(tNode);
 //        hasTags = true;
 //      }
-//    }
-//
-//    // Add the node to the host
-//    return hasTags? node : null;
-//  }
-//
-//  // Aggregate XML methods ========================================================================
-//
-//  /**
-//   * Returns the XML for the specified parameters using the param tags for additional description.
-//   *
-//   * @param parameters parameters instances to process
-//   * @param tags       corresponding parameter tags (not necessarily in the same order)
-//   *
-//   * @return the XML for the specified parameters using the param tags for additional description.
-//   */
-//  private static XMLNode toParametersNode(Parameter[] parameters, ParamTag[] tags) {
-//    if (parameters.length == 0) return null;
-//
-//    // Iterate over the parameters
-//    XMLNode node = new XMLNode("parameters");
-//    for (Parameter parameter : parameters) {
-//      XMLNode p = toParameterNode(parameter, find(tags, parameter.name()));
-//      node.child(p);
-//    }
-//
-//    return node;
-//  }
-//
-//  /**
-//   * Returns the XML for the specified exceptions using the throws tags for additional description.
-//   *
-//   * @param exceptions exceptions instances to process
-//   * @param tags       corresponding throws tags (not necessarily in the same order)
-//   *
-//   * @return the XML for the specified parameters using the param tags for additional description.
-//   */
-//  private static XMLNode toExceptionsNode(ClassDoc[] exceptions, ThrowsTag[] tags) {
-//    if (exceptions.length == 0) return null;
-//
-//    // Iterate over the exceptions
-//    XMLNode node = new XMLNode("exceptions");
-//    for (ClassDoc exception : exceptions) {
-//      XMLNode n = toExceptionNode(exception, find(tags, exception.name()));
-//      node.child(n);
-//    }
-//
-//    return node;
-//  }
-//
-//  /**
-//   * Transforms comments on the Doc object into XML.
-//   *
-//   * @param doc The Doc object.
-//   * @param node The node to add the comment nodes to.
-//   */
-//  private static List<XMLNode> toSeeNodes(SeeTag[] tags) {
-//    if (tags == null || tags.length == 0) return Collections.emptyList();
-//
-//    List<XMLNode> nodes = new ArrayList<XMLNode>(tags.length);
-//    for (SeeTag tag : tags) {
-//      XMLNode n = toSeeNode(tag);
-//      if (n != null) {
-//        nodes.add(n);
-//      }
-//    }
-//
-//    // Add the node to the host
-//    return nodes;
-//  }
-//
-//  /**
-//   * Returns the XML node corresponding to the specified ClassDoc.
-//   *
-//   * @param classDoc The class to transform.
-//   */
-//  private static XMLNode toAnnotationsNode(AnnotationDesc[] annotations) {
-//    if (annotations.length < 1) return null;
-//
-//    XMLNode node = new XMLNode("annotations");
-//    for (AnnotationDesc annotation : annotations) {
-//      node.child(toAnnotationNode(annotation));
-//    }
-//
-//    return node;
-//  }
-//
-//  // Atomic XML methods ===========================================================================
-//
-//  /**
-//   * Returns the XML for a see tag.
-//   *
-//   * @param tag The See tag to process.
-//   */
-//  private static XMLNode toSeeNode(SeeTag tag) {
-//    if (tag == null) return null;
-//    XMLNode see = new XMLNode("see");
-//    see.attribute("xlink:type", "simple");
-//
-//    boolean multiple = options.useMultipleFiles();
-//
-//    // A link
+    }
+
+    // Add the node to the host
+    return hasTags ? node : null;
+  }
+
+  // Aggregate XML methods ========================================================================
+
+  /**
+   * Returns the XML for the specified parameters using the param tags for additional description.
+   *
+   * @return the XML for the specified parameters using the param tags for additional description.
+   */
+  private XMLNode toParametersNode(ExecutableElement member) {
+    List<? extends VariableElement> parameters = member.getParameters();
+    if (parameters.isEmpty()) return null;
+
+    // Iterate over the parameters
+    XMLNode node = new XMLNode("parameters");
+    for (VariableElement parameter : parameters) {
+      ParamTree comment = findParamTree(member, parameter.getSimpleName().toString());
+      XMLNode p = toParameterNode(parameter, comment);
+      node.child(p);
+    }
+
+    return node;
+  }
+
+  /**
+   * Returns the XML for the specified exceptions using the throws tags for additional description.
+   *
+   * @return the XML for the specified parameters using the param tags for additional description.
+   */
+  private XMLNode toExceptionsNode(ExecutableElement member) {
+    List<? extends TypeMirror> thrownTypes = member.getThrownTypes();
+    if (thrownTypes.isEmpty()) return null;
+
+    // Iterate over the exceptions
+    XMLNode node = new XMLNode("exceptions");
+    for (TypeMirror exception : thrownTypes) {
+      ThrowsTree throwsTree = findThrowsTree(member, exception.toString());
+      XMLNode n = toExceptionNode(exception, throwsTree);
+      node.child(n);
+    }
+
+    return node;
+  }
+
+  /**
+   * Transforms comments on the Doc object into XML.
+   */
+  private List<XMLNode> toSeeNodes(Element element) {
+    DocCommentTree tree = this.env.getDocTrees().getDocCommentTree(element);
+    if (tree == null) return Collections.emptyList();
+    List<? extends DocTree> blockTags = tree.getBlockTags();
+    if (blockTags.isEmpty()) return Collections.emptyList();
+    List<XMLNode> nodes = new ArrayList<>();
+    for (DocTree tag : blockTags) {
+      if (tag.getKind() == DocTree.Kind.SEE) {
+        XMLNode n = toSeeNode((SeeTree) tag);
+        if (n != null) {
+          nodes.add(n);
+        }
+      }
+    }
+
+    // Add the node to the host
+    return nodes;
+  }
+
+
+  private static XMLNode toAnnotationsNode(List<? extends AnnotationMirror> annotations) {
+    if (annotations.isEmpty()) return null;
+    XMLNode node = new XMLNode("annotations");
+    for (AnnotationMirror annotation : annotations) {
+      node.child(toAnnotationNode(annotation));
+    }
+    return node;
+  }
+
+  // Atomic XML methods ===========================================================================
+
+  /**
+   * Returns the XML for a see tag.
+   *
+   * @param doc The See tag to process.
+   */
+  private XMLNode toSeeNode(SeeTree doc) {
+    if (doc == null) return null;
+    XMLNode see = new XMLNode("see");
+    see.attribute("xlink:type", "simple");
+
+    boolean multiple = this.options.useMultipleFiles();
+    // TODO
+
+    // A link
 //    if (tag.text().startsWith("<a")) {
 //      String text = tag.text();
 //      Matcher href = Pattern.compile("href=\"(.+)\"").matcher(text);
@@ -578,71 +592,73 @@ public final class XMLDoclet implements Doclet {
 //      if (title.find()) {
 //        see.attribute("xlink:title", title.group(1));
 //      }
-//
-//    // A referenced Package
+
+    // A referenced Package
 //    } else if (tag.referencedPackage() != null) {
 //      String pkg = tag.referencedPackage().name();
 //      see.attribute("xlink:href", multiple? pkg+".xml" : "xpath1(//package[name='"+pkg+"'])");
-//
-//    // A referenced Class
+
+    // A referenced Class
 //    } else if (tag.referencedClass() != null) {
 //      String cls = tag.referencedClass().qualifiedName();
 //      see.attribute("xlink:href", multiple? cls+".xml" : "xpath1(//class[name='"+cls+"'])");
-//
-//    // Something else
+
+    // Something else
 //    } else {
 //      see.attribute("xlink:href", tag.text());
 //    }
-//
-//    return see;
-//  }
-//
-//  /**
-//   * Returns the XML for a parameter and its corresponding param tag.
-//   *
-//   * @return The corresponding XML.
-//   */
-//  private static XMLNode toParameterNode(Parameter parameter, ParamTag tag) {
-//    if (parameter == null) return null;
-//    XMLNode node = new XMLNode("parameter");
-//    node.attribute("name", parameter.name());
-//    node.attribute("type", parameter.type().typeName());
-//    node.attribute("fulltype", parameter.type().toString());
-//    if (tag!= null) {
-//      node.text(toComment(tag));
-//    }
-//    return node;
-//  }
-//
-//  /**
-//   * Returns the XML for an exception and its corresponding throws tag.
-//   *
-//   * @return The corresponding XML.
-//   */
-//  private static XMLNode toExceptionNode(ClassDoc exception, ThrowsTag tag) {
-//    if (exception == null) return null;
-//    XMLNode node = new XMLNode("exception");
-//    node.attribute("type", exception.typeName());
-//    node.attribute("fulltype", exception.qualifiedTypeName());
-//    if (tag != null) {
+
+    return see;
+  }
+
+  /**
+   * Returns the XML for a parameter and its corresponding param tag.
+   *
+   * @return The corresponding XML.
+   */
+  private XMLNode toParameterNode(VariableElement parameter, ParamTree comment) {
+    if (parameter == null) return null;
+    XMLNode node = new XMLNode("parameter");
+    node.attribute("name", parameter.getSimpleName().toString());
+    node.attribute("type", toSimpleType(parameter.asType()));
+    node.attribute("fulltype", parameter.asType().toString());
+    if (comment != null) {
+      node.text(toCommentText(comment));
+    }
+    return node;
+  }
+
+  /**
+   * Returns the XML for an exception and its corresponding throws tag.
+   *
+   * @return The corresponding XML.
+   */
+  private XMLNode toExceptionNode(TypeMirror exception, ThrowsTree throwsTree) {
+    if (exception == null) return null;
+    XMLNode node = new XMLNode("exception");
+    node.attribute("type", toSimpleType(exception));
+    node.attribute("fulltype", exception.toString());
+    if (throwsTree != null) {
+      // TODO
 //      node.attribute("comment", tag.exceptionComment());
 //      node.text(toComment(tag));
-//    }
-//    return node;
-//  }
-//
-//  /**
-//   * Transforms comments on the Doc object into XML.
-//   *
-//   * @param doc The Doc object.
-//   * @param node The node to add the comment nodes to.
-//   */
-//  private static XMLNode toComment(Doc doc) {
-//    if (doc.commentText() == null || doc.commentText().length() == 0) return null;
-//    XMLNode node = new XMLNode("comment", doc, doc.position().line());
-//    StringBuilder comment = new StringBuilder();
-//
-//    // Analyse each token and produce comment node
+    }
+    return node;
+  }
+
+  /**
+   * Transforms comments on the Doc object into XML.
+   *
+   * @param element The element
+   */
+  private XMLNode toComment(Element element) {
+    DocCommentTree commentTree = this.env.getDocTrees().getDocCommentTree(element);
+    if (commentTree == null || commentTree.toString().isEmpty()) return null;
+    XMLNode node = new XMLNode("comment", element, -1); // TODO doc.position().line()
+    StringBuilder comment = new StringBuilder();
+
+    // Analyse each token and produce comment node
+    // TODO
 //    for (Tag t : doc.inlineTags()) {
 //      Taglet taglet = options.getTagletForName(t.name());
 //      if (taglet != null) {
@@ -651,21 +667,18 @@ public final class XMLDoclet implements Doclet {
 //        comment.append(t.text());
 //      }
 //    }
-//
-//    return node.text(comment.toString());
-//  }
-//
-//  /**
-//   * Transforms comments on the Doc object into XML.
-//   *
-//   * @param doc The Doc object.
-//   * @param node The node to add the comment nodes to.
-//   */
-//  private static String toComment(Tag tag) {
-//    if (tag.text() == null || tag.text().length() == 0) return null;
-//    StringBuilder comment = new StringBuilder();
-//
-//    // Analyse each token and produce comment node
+
+    return node.text(comment.toString());
+  }
+
+  /**
+   * Transforms comments on the Doc object into XML.
+   */
+  private static String toCommentText(DocCommentTree tree) {
+    if (tree == null || tree.toString().isEmpty()) return null;
+    StringBuilder comment = new StringBuilder();
+
+    // Analyse each token and produce comment node
 //    for (Tag t : tag.inlineTags()) {
 //      Taglet taglet = options.getTagletForName(t.name());
 //      if (taglet != null) {
@@ -674,24 +687,47 @@ public final class XMLDoclet implements Doclet {
 //        comment.append(t.text());
 //      }
 //    }
-//
-//    return comment.toString();
-//  }
-//
-//  /**
-//   *
-//   * @return an "annotation" XML node for the annotation.
-//   */
-//  private static XMLNode toAnnotationNode(AnnotationDesc annotation) {
-//    if (annotation == null) return null;
-//    XMLNode node = new XMLNode("annotation");
-//    node.attribute("name", annotation.annotationType().name());
+
+    return comment.toString();
+  }
+
+  /**
+   * Transforms comments on the Doc object into XML.
+   */
+  private static String toCommentText(DocTree tree) {
+    if (tree == null || tree.toString().isEmpty()) return null;
+    StringBuilder comment = new StringBuilder();
+    // TODO
+    comment.append(tree);
+
+    // Analyse each token and produce comment node
+//    for (Tag t : tag.inlineTags()) {
+//      Taglet taglet = options.getTagletForName(t.name());
+//      if (taglet != null) {
+//        comment.append(taglet.toString(t));
+//      } else {
+//        comment.append(t.text());
+//      }
+//    }
+
+    return comment.toString();
+  }
+
+
+  /**
+   * @return an "annotation" XML node for the annotation.
+   */
+  private static XMLNode toAnnotationNode(AnnotationMirror annotation) {
+    if (annotation == null) return null;
+    XMLNode node = new XMLNode("annotation");
+    node.attribute("name", annotation.getAnnotationType().asElement().getSimpleName().toString());
+    // TODO
 //    for (ElementValuePair pair : annotation.elementValues()) {
 //      node.child(toPairNode(pair));
 //    }
-//    return node;
-//  }
-//
+    return node;
+  }
+
 //  /**
 //   *
 //   * @return an "element" XML node for the element value pair.
@@ -733,48 +769,69 @@ public final class XMLDoclet implements Doclet {
 //
 //    return node;
 //  }
-//
-//  // Utilities ====================================================================================
-//
-//  /**
-//   * Sets the visibility for the class, method or field.
-//   *
-//   * @param member The member for which the visibility needs to be set (class, method, or field).
-//   * @param node The node to which the visibility should be set.
-//   */
-//  private static String getVisibility(ProgramElementDoc member) {
-//    if (member.isPrivate()) return "private";
-//    if (member.isProtected()) return "protected";
-//    if (member.isPublic()) return "public";
-//    if (member.isPackagePrivate()) return "package-private";
-//    // Should never happen
-//    return null;
-//  }
-//
-//  /**
-//   * Find the corresponding throws tag
-//   *
-//   * @return
-//   */
-//  private static ThrowsTag find(ThrowsTag[] tags, String name){
-//    for (ThrowsTag tag : tags) {
-//      if (tag.exceptionName().equalsIgnoreCase(name)) return tag;
-//    }
-//    return null;
-//  }
-//
-//  /**
-//   * Find the corresponding parameter tag.
-//   *
-//   * @return
-//   */
-//  private static ParamTag find(ParamTag[] tags, String name){
-//    for (ParamTag tag : tags) {
-//      if (tag.parameterName().equalsIgnoreCase(name)) return tag;
-//    }
-//    return null;
-//  }
-//
+
+  // Utilities ====================================================================================
+
+  /**
+   * Sets the visibility for the class, method or field.
+   *
+   * @param element The member for which the visibility needs to be set (class, method, or field).
+   */
+  private static String getVisibility(Element element) {
+    Set<Modifier> modifiers = element.getModifiers();
+    if (modifiers.contains(Modifier.PRIVATE)) return "private";
+    if (modifiers.contains(Modifier.PROTECTED)) return "protected";
+    if (modifiers.contains(Modifier.PUBLIC)) return "public";
+    return "package-private";
+  }
+
+  private static boolean isSerializable(TypeElement element) {
+    List<? extends TypeMirror> interfaces = element.getInterfaces();
+    for (TypeMirror i : interfaces) {
+      if ("java.io.Serializable".equals(i.toString())) return true;
+    }
+    return false;
+  }
+
+  private static String getPackageName(TypeElement element) {
+    Element top = element.getEnclosingElement();
+    // TODO handle nested classes
+    if (element.getNestingKind() == NestingKind.TOP_LEVEL) {
+      return top.toString();
+    }
+    return "";
+  }
+
+  /**
+   * Find the corresponding throws tag
+   */
+  private ThrowsTree findThrowsTree(ExecutableElement member, String name) {
+    DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(member);
+    if (comment == null) return null;
+    for (DocTree tree : comment.getBlockTags()) {
+      if (tree.getKind() == DocTree.Kind.THROWS) {
+        ThrowsTree throwsTree = (ThrowsTree) tree;
+        if (throwsTree.getExceptionName().toString().equals(name)) return throwsTree;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find the corresponding parameter tag.
+   */
+  private ParamTree findParamTree(ExecutableElement member, String name) {
+    DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(member);
+    if (comment == null) return null;
+    for (DocTree tree : comment.getBlockTags()) {
+      if (tree.getKind() == DocTree.Kind.PARAM) {
+        ParamTree paramTree = (ParamTree) tree;
+        if (paramTree.getName().toString().equals(name)) return paramTree;
+      }
+    }
+    return null;
+  }
+
 //  /**
 //   * Returns the value type of the annotation depending on the specified object's class.
 //   *
@@ -792,5 +849,12 @@ public final class XMLDoclet implements Doclet {
 //    if (o instanceof FieldDoc) return ((FieldDoc)o).containingClass().qualifiedName();
 //    return o.getClass().getName();
 //  }
+
+  private String toSimpleType(TypeMirror type) {
+    if (type instanceof DeclaredType) {
+      return ((DeclaredType) type).asElement().getSimpleName().toString();
+    }
+    return type.toString();
+  }
 
 }

@@ -1,12 +1,18 @@
 package org.pageseeder.xmldoclet.options;
 
-import jdk.javadoc.doclet.Taglet;
 import jdk.javadoc.doclet.Reporter;
+import jdk.javadoc.doclet.Taglet;
 
 import java.util.Collections;
 import java.util.List;
 
-public class TagletOption extends XMLDocletOptionBase {
+/**
+ * Option to specify custom taglet implementations to use for the documentation.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public final class TagletOption extends XMLDocletOptionBase {
 
   public TagletOption(Reporter reporter) {
     super(reporter);

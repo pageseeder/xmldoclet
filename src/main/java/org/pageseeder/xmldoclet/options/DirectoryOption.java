@@ -6,7 +6,13 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class DirectoryOption extends XMLDocletOptionBase {
+/**
+ * Option to specify the output directory of the doclet.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public final class DirectoryOption extends XMLDocletOptionBase {
 
   private File directory = new File(".");
 

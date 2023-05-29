@@ -7,7 +7,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TagOption extends XMLDocletOptionBase {
+/**
+ * Option to specify custom tags to use for the documentation.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public final class TagOption extends XMLDocletOptionBase {
 
   private List<CustomTag> tags = new ArrayList<>();
 
@@ -45,21 +51,21 @@ public class TagOption extends XMLDocletOptionBase {
     String spec = arguments.get(0);
     int colon = spec.indexOf(':');
     // TODO Check spec is valid XML name
-    String name = colon < 0? spec : spec.substring(0, colon);
+    String name = colon < 0 ? spec : spec.substring(0, colon);
     CustomTag tag = new CustomTag(name, false);
     if (colon >= 0) {
-        // scope
-        String scope = spec.substring(colon+1);
-        colon = scope.indexOf(':');
-        if (colon >= 0) {
-            String title = scope.substring(colon+1);
-            scope = scope.substring(0, colon);
-            tag.setTitle(title);
-        }
-        tag.setScope(scope);
+      // scope
+      String scope = spec.substring(colon + 1);
+      colon = scope.indexOf(':');
+      if (colon >= 0) {
+        String title = scope.substring(colon + 1);
+        scope = scope.substring(0, colon);
+        tag.setTitle(title);
+      }
+      tag.setScope(scope);
     }
     this.tags.add(tag);
-    note("Adding custom tag "+tag);
+    note("Adding custom tag " + tag);
     return true;
   }
 

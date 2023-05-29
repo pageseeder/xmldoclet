@@ -5,6 +5,12 @@ import jdk.javadoc.doclet.Reporter;
 
 import javax.tools.Diagnostic;
 
+/**
+ * Base class for options
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
 public abstract class XMLDocletOptionBase implements Doclet.Option {
 
   private final Reporter reporter;

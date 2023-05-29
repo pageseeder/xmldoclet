@@ -2,11 +2,20 @@ package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-public class FilenameOption extends XMLDocletOptionBase {
+/**
+ * Option to specify the filename of the output.
+ *
+ * <p>Only used if single output.
+ *
+ * @see MultipleOption
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public final class FilenameOption extends XMLDocletOptionBase {
 
   /**
    * The default filename for the output.

@@ -5,6 +5,12 @@ import jdk.javadoc.doclet.Reporter;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Option to generate the documentation within subfolders.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
 public class SubfoldersOption extends XMLDocletOptionBase {
 
   private boolean enabled = false;

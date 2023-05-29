@@ -7,7 +7,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-public class DocencodingOption extends XMLDocletOptionBase {
+/**
+ * Option to specify the character encoding of the XML output.
+ *
+ * <p>Defaults to UTF-8.
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public final class DocencodingOption extends XMLDocletOptionBase {
 
   private Charset charset = StandardCharsets.UTF_8;
 

@@ -2,10 +2,17 @@ package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class MultipleOption extends XMLDocletOptionBase {
+/**
+ * Option to generate the XML documentation as multiple files (one per element).
+ *
+ * @author Christophe Lauret
+ * @version 1.0
+ */
+public class MultipleOption extends XMLDocletOptionBase implements Serializable {
 
   private boolean enabled = false;
 
