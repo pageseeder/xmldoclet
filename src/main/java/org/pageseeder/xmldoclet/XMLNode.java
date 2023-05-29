@@ -35,8 +35,7 @@ import javax.lang.model.element.Element;
  * Represents an XML node.
  *
  * @author Christophe Lauret
- *
- * @version 7 May 2012
+ * @version 1.0
  */
 public final class XMLNode {
 
@@ -94,11 +93,11 @@ public final class XMLNode {
    * Constructs the XMLNode.
    *
    * @param name The name of the element
-   * @param doc  The source java document the node belongs to.
+   * @param element The source java document the node belongs to.
    */
-  public XMLNode(String name, Element doc, int line) {
+  public XMLNode(String name, Element element, int line) {
     this._name = name;
-    this._doc = doc;
+    this._doc = element;
     this._attributes = new HashMap<>();
     this._children = new ArrayList<>();
     this._content = new StringBuilder();
@@ -109,10 +108,10 @@ public final class XMLNode {
    * Constructs the XMLNode.
    *
    * @param name The name of the element
-   * @param doc  The source java document the node belongs to.
+   * @param element The source java document the node belongs to.
    */
-  public XMLNode(String name, Element doc) {
-    this(name, doc, -1);
+  public XMLNode(String name, Element element) {
+    this(name, element, -1);
   }
 
   /**
@@ -179,15 +178,15 @@ public final class XMLNode {
   /**
    * Set the doc for the node and its descendants.
    *
-   * @param doc the doc
+   * @param element the doc
    */
-  private void setDoc(Element doc) {
-    if (doc == null) return;
+  private void setDoc(Element element) {
+    if (element == null) return;
     if (this._doc == null) {
-      this._doc = doc;
+      this._doc = element;
     }
     for (XMLNode child : this._children) {
-      child.setDoc(doc);
+      child.setDoc(element);
     }
   }
 
@@ -308,11 +307,11 @@ public final class XMLNode {
    * Encodes strings as XML. Check for <, >, ', ", &.
    *
    * @param text The input string.
-   * @param doc  The source java document the node belongs to.
+   * @param element The source java document the node belongs to.
    * @return The encoded string.
    */
-  private static String encode(String text, Element doc, int line) {
-    if (text.indexOf('<') >= 0) return tidy(text, doc, line);
+  private static String encode(String text, Element element, int line) {
+    if (text.indexOf('<') >= 0) return tidy(text, element, line);
     else return encodeElement(text);
   }
 
