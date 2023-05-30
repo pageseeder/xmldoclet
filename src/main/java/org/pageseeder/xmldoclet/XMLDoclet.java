@@ -472,7 +472,6 @@ public final class XMLDoclet implements Doclet {
         UnknownBlockTagTree block = (UnknownBlockTagTree)tag;
         Taglet taglet = options.getTagletForName(block.getTagName());
         if (taglet != null) {
-          System.err.println(block.getKind()+":"+block.getTagName());
           XMLNode tNode = new XMLNode("tag");
           tNode.attribute("name", block.getTagName());
           String markup = Markup.asString(block.getContent(), this.options, false);

@@ -52,7 +52,6 @@ public class Markup {
     } else if (tree instanceof BlockTagTree) {
       addBlockTag((BlockTagTree)tree);
     } else {
-      System.err.println(tree.getKind()+":"+tree);
       this.xml.append(tree);
     }
   }
@@ -154,7 +153,6 @@ public class Markup {
     Taglet taglet = this.options.getTagletForName("@"+inlineTag.getTagName());
     if (taglet != null) {
       String val = taglet.toString(Collections.singletonList(inlineTag), null);
-      System.err.println(inlineTag.getKind()+":"+inlineTag+" -> "+taglet+" => "+val);
       this.xml.append(taglet.toString(Collections.singletonList(inlineTag), null));
     } else {
       // TODO Unexpected tag
@@ -164,7 +162,6 @@ public class Markup {
 
   private void addBlockTag(BlockTagTree blockTag) {
     Taglet taglet = this.options.getTagletForName(blockTag.getTagName());
-    System.err.println("(b) "+blockTag.getKind()+":"+blockTag.getTagName()+" -> "+taglet);
     //      TODO
     if (taglet != null) {
       this.xml.append(taglet.toString(Collections.singletonList(blockTag), null));

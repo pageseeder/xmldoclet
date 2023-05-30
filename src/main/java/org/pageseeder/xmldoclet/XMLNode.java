@@ -308,7 +308,7 @@ public final class XMLNode {
   }
 
   /**
-   * Encodes strings as XML. Check for <, >, ', ", &.
+   * Encodes strings as XML. Check for {@literal  <, >, ', ", & }.
    *
    * @param in The input string.
    * @return The encoded string.
