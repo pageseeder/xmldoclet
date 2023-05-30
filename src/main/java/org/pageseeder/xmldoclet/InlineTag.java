@@ -19,7 +19,6 @@ import com.sun.source.doctree.*;
 import jdk.javadoc.doclet.Taglet;
 
 import javax.lang.model.element.Element;
-import java.lang.ref.Reference;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -45,10 +44,13 @@ public enum InlineTag implements Taglet {
    */
   CODE("code") {
 
-//    @Override
-//    public String toString(DocTree tag, Element element) {
-//      return "<code><![CDATA["+tag.text()+"]]></code>";
-//    }
+    @Override
+    public String toString(DocTree tag, Element element) {
+      if (tag instanceof LiteralTree) {
+        return "<code><![CDATA["+((LiteralTree)tag).getBody()+"]]></code>";
+      }
+      return "<code><![CDATA["+tag+"]]></code>";
+    }
 
   },
 
@@ -163,7 +165,7 @@ public enum InlineTag implements Taglet {
   },
 
   /**
-   * When {@value} is used (without any argument) in the doc comment of a static field,
+   * When {@code @value} is used (without any argument) in the doc comment of a static field,
    * it displays the value of that constant.
    *
    * <p>When used with argument package.class#field in any doc comment, it displays the value
@@ -223,7 +225,7 @@ public enum InlineTag implements Taglet {
     if (tag instanceof InlineTagTree) {
       InlineTagTree inline = ((InlineTagTree)tag);
       String name = inline.getTagName();
-      return "<"+name+">"+inline.toString()+"</"+name+">";
+      return "<"+name+">"+inline+"</"+name+">";
     }
     return "<inline>TODO</inline>";
   }

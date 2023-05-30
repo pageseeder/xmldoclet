@@ -15,7 +15,7 @@ import java.util.List;
  */
 public final class TagOption extends XMLDocletOptionBase {
 
-  private List<CustomTag> tags = new ArrayList<>();
+  private final List<CustomTag> tags = new ArrayList<>();
 
   public TagOption(Reporter reporter) {
     super(reporter);

@@ -461,17 +461,6 @@ public final class XMLDoclet implements Doclet {
     if (comment == null) return null;
     List<? extends DocTree> blockTags = comment.getBlockTags();
 
-    // TODO Handle tags
-//    System.out.println(element.getSimpleName() + ":");
-//    List<? extends DocTree> fullbody = comment.getFullBody();
-//    System.out.println(element.getKind() + ":" + element.getSimpleName());
-//    for (DocTree tree : fullbody) {
-//      System.out.println("__" + tree.getKind() + ":" + tree.toString());
-//    }
-//    for (DocTree tree : blockTags) {
-//      System.out.println("~~" + tree.getKind() + ":" + tree.toString());
-//    }
-
     // Create the comment node
     XMLNode node = new XMLNode("tags");
 
@@ -479,14 +468,19 @@ public final class XMLDoclet implements Doclet {
 
     // Handle the tags
     for (DocTree tag : blockTags) {
-//      Taglet taglet = options.getTagletForName(tag.name().length() > 1? tag.name().substring(1) : "");
-//      if (taglet != null && !(taglet instanceof BlockTag)) {
-//        XMLNode tNode = new XMLNode("tag");
-//        tNode.attribute("name", tag.name());
-//        tNode.text(taglet.toString(tag));
-//        node.child(tNode);
-//        hasTags = true;
-//      }
+      if (tag.getKind() == DocTree.Kind.UNKNOWN_BLOCK_TAG) {
+        UnknownBlockTagTree block = (UnknownBlockTagTree)tag;
+        Taglet taglet = options.getTagletForName(block.getTagName());
+        if (taglet != null) {
+          System.err.println(block.getKind()+":"+block.getTagName());
+          XMLNode tNode = new XMLNode("tag");
+          tNode.attribute("name", block.getTagName());
+          String markup = Markup.asString(block.getContent(), this.options, false);
+          tNode.text(markup);
+          node.child(tNode);
+          hasTags = true;
+        }
+      }
     }
 
     // Add the node to the host

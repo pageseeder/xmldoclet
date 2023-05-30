@@ -15,21 +15,14 @@
  */
 package org.pageseeder.xmldoclet;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
+import javax.lang.model.element.Element;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.lang.model.element.Element;
 
 /**
  * Represents an XML node.
@@ -43,11 +36,6 @@ public final class XMLNode {
    * Used in the toString method to provide a carriage-return + line-feed.
    */
   private static final String CRLF = System.getProperty("line.separator");
-
-  /**
-   * To print nowhere.
-   */
-  private static final PrintWriter VOID_WRITER = new PrintWriter(new VoidWriter());
 
   /**
    * The element name.
@@ -238,6 +226,10 @@ public final class XMLNode {
         this._namespacePrefix = this._namespacePrefix + ":";
       }
 
+      if (!dir.exists()) {
+        dir.mkdirs();
+      }
+
       // Write out to the file
       File file = new File(dir, name);
       FileOutputStream os = new FileOutputStream(file);
@@ -311,7 +303,7 @@ public final class XMLNode {
    * @return The encoded string.
    */
   private static String encode(String text, Element element, int line) {
-    if (text.indexOf('<') >= 0) return tidy(text, element, line);
+    if (text.indexOf('<') >= 0) return text;
     else return encodeElement(text);
   }
 
@@ -357,65 +349,6 @@ public final class XMLNode {
     return out.toString();
   }
 
-  /**
-   * Tidy the text for inclusion as a comment description.
-   *
-   * @param text the HTML body text to tidy
-   * @param doc  The source java document the node belongs to.
-   * @return the tidied HTML
-   */
-  private static String tidy(String text, Element doc, int line) {
-    // TODO FIXME
-    return "";
-//    Tidy tidy = new Tidy();
-//    tidy.setXmlOut(true);
-//    tidy.setEncloseText(false);
-//    tidy.setQuiet(true);
-//    tidy.setEscapeCdata(false);
-//    tidy.setIndentCdata(false);
-//    tidy.setTrimEmptyElements(false);
-//    tidy.setDropProprietaryAttributes(false);
-//    tidy.setErrout(VOID_WRITER);
-//
-//    // Tidy wants a full HTML document...
-//    StringBuilder in = new StringBuilder();
-//    in.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"");
-//    in.append(" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">");
-//    in.append("<html><head><title>Remove</title></head><body>");
-//    in.append(text);
-//    in.append("</body></html>");
-//
-//    // Count new lines
-//    int baseline = line;
-//    if (line != -1) {
-//      // TODO Compute the lines
-//// FIXME     baseline = line - countLines(doc.getRawCommentText()) -2;
-//    }
-//    tidy.setMessageListener(new Listener(doc, baseline));
-//
-//    // Tidy
-//    StringWriter w = new StringWriter();
-//    tidy.parse(new StringReader(in.toString()), w);
-//    String out = w.toString();
-//
-//    // Get output
-//    int start = out.indexOf("<body>");
-//    int end = out.indexOf("</body>");
-//    if (start != -1 && end != -1) return out.substring(start+6, end);
-//
-//    // Second chance try with XML
-//    tidy.setXmlTags(true);
-//    in.setLength(0);
-//    in.append(text);
-//
-//    // Tidy
-//    w = new StringWriter();
-//    tidy.parse(new StringReader(in.toString()), w);
-//
-//    // Report errors
-//    return w.toString();
-  }
-
   private static int countLines(String text) {
     int lineCount = 0;
     int i = text.indexOf('\n');
@@ -426,78 +359,4 @@ public final class XMLNode {
     return lineCount;
   }
 
-  /**
-   * A listener to capture errors thrown by tidy.
-   */
-//  private static class Listener implements TidyMessageListener  {
-//
-//    /**
-//     * Error code returned by Tidy for unknown attributes.
-//     */
-//    private static final int UNKNOWN_ATTRIBUTE = 48;
-//
-//    /**
-//     * The current document being processing.
-//     */
-//    private final Element _doc;
-//
-//    /**
-//     * The line where the source that is being tidied starts.
-//     */
-//    private final int _baseline;
-//
-//    /**
-//     * Creates a new listener for tidy
-//     *
-//     * @param doc      The source java doc
-//     * @param baseline The line where the source that is being tidied starts.
-//     */
-//    public Listener(Element doc, int baseline) {
-//      this._doc = doc;
-//      this._baseline = baseline;
-//    }
-//
-//    @Override
-//    public void messageReceived(TidyMessage message) {
-//      int code = message.getErrorCode();
-//      int line = this._baseline >= 0? this._baseline + message.getLine() : -1;
-//      if (code != UNKNOWN_ATTRIBUTE) {
-//        Level level = message.getLevel();
-//        String prefix = "["+level+"]"+(level == Level.ERROR? "   " : " ");
-//        System.err.println(prefix+this._doc.toString()+":" +(line != -1? "L"+line+" " : " ")+message.getMessage());
-//      }
-//    }
-//
-//  };
-
-  /**
-   * Does nothing.
-   */
-  private static class VoidWriter extends Writer {
-
-    @Override
-    public void write(char[] cbuf) {
-    }
-
-    @Override
-    public void write(int c) {
-    }
-
-    @Override
-    public void write(String str, int off, int len) {
-    }
-
-    @Override
-    public void write(char[] cbuf, int off, int len)  {
-    }
-
-    @Override
-    public void flush() {
-    }
-
-    @Override
-    public void close() {
-    }
-
-  }
 }

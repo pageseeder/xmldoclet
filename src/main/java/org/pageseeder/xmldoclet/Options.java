@@ -76,13 +76,6 @@ public final class Options {
     this.subfoldersOption = new SubfoldersOption(reporter);
     this.tagletOption = new TagletOption(reporter);
     this.tagOption = new TagOption(reporter);
-    // Load the standard taglets
-    for (BlockTag t : BlockTag.values()) {
-      this.taglets.put(t.getName(), t);
-    }
-    for (InlineTag t : InlineTag.values()) {
-      this.taglets.put("@"+t.getName(), t);
-    }
   }
 
   /**
@@ -133,10 +126,30 @@ public final class Options {
    * @return The corresponding <code>Taglet</code> or <code>null</code>.
    */
   public Taglet getTagletForName(String name) {
-    for (String n : this.taglets.keySet()) {
-      if (n.equals(name)) return this.taglets.get(n);
+    return getTaglets().get(name);
+  }
+
+  private Map<String, Taglet> getTaglets() {
+    if (this.taglets.isEmpty()) {
+      // Load the standard taglets
+      for (BlockTag t : BlockTag.values()) {
+        this.taglets.put(t.getName(), t);
+      }
+      for (InlineTag t : InlineTag.values()) {
+        this.taglets.put("@" + t.getName(), t);
+      }
+      // Load custom tags
+      for (CustomTag t : this.tagOption.getTags()) {
+        String name = t.isInlineTag() ? '@' + t.getName() : t.getName();
+        this.taglets.put(name, t);
+      }
+      // Load custom taglets
+      for (Taglet t : this.tagletOption.getTaglets()) {
+        String name = t.isInlineTag() ? '@' + t.getName() : t.getName();
+        this.taglets.put(name, t);
+      }
     }
-    return null;
+    return this.taglets;
   }
 
   /**

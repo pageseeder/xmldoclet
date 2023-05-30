@@ -34,7 +34,8 @@ the `jdk.home` variable. for example:
 
 ```shell
 javadoc -doclet org.pageseeder.xmldoclet.XMLDoclet \
-       -docletpath target/classes \
-       -sourcepath src/main/java \
-       org.pageseeder.xmldoclet org.pageseeder.xmldoclet.options
+        -docletpath build/classes/java/main \
+        -sourcepath src/test/java \
+        --d build/testdoc \
+        org.example
 ```
