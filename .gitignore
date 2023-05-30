@@ -1,6 +1,7 @@
 /.project
-/target/
+/build/
 /.settings/
 /.classpath
 /.idea
 /xmldoclet.xml
+/.gradle/

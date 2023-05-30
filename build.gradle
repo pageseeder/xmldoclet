@@ -1,0 +1,63 @@
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+  id 'io.codearte.nexus-staging' version '0.30.0'
+}
+
+ext {
+  globalVersion = file('version.txt').text.trim()
+}
+
+allprojects {
+  group   = 'org.pageseeder.xmldoclet'
+  version = "$globalVersion"
+
+  apply plugin: 'java-library'
+  apply from: "$rootDir/gradle/publish-mavencentral.gradle"
+
+  java {
+    withJavadocJar()
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+  }
+
+  repositories {
+    mavenCentral {
+      url = uri("https://maven-central.storage.googleapis.com/maven2")
+    }
+  }
+
+  jar {
+    manifest {
+      attributes 'Implementation-Vendor':  'Allette Systems',
+                 'Implementation-Title':   "$title",
+                 'Implementation-Version': "$globalVersion"
+    }
+  }
+
+  javadoc {
+
+    // Let's package the javadoc even if there are some lint issues
+    options.addStringOption('Xdoclint:none', '-quiet')
+
+    // Generate better doc if we can
+    if (JavaVersion.current().isJava9Compatible()) {
+      options.addBooleanOption('html5', true)
+    }
+  }
+
+}
+
+dependencies {
+
+  api('org.pageseeder.xmlwriter:pso-xmlwriter:1.0.4')
+
+  testImplementation('junit:junit:4.13.2')
+
+}
+
+wrapper {
+  gradleVersion = '8.0'
+  distributionType = Wrapper.DistributionType.ALL
+}
