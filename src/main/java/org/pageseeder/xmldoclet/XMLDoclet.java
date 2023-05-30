@@ -274,7 +274,7 @@ public final class XMLDoclet implements Doclet {
     // Other child nodes
     node.child(toAnnotationsNode(typeElement.getAnnotationMirrors()));
     node.child(toStandardTags(typeElement));
-//    node.child(toTags(typeElement));
+    node.child(toTags(typeElement));
     node.child(toSeeNodes(typeElement));
     node.child(toFieldsNode(typeElement));
     node.child(toConstructorsNode(typeElement));
@@ -322,7 +322,7 @@ public final class XMLDoclet implements Doclet {
 
     // Other child nodes
     node.child(toStandardTags(field));
-// TODO   node.child(toTags(field));
+    node.child(toTags(field));
     node.child(toSeeNodes(field));
 
     return node;
@@ -660,54 +660,62 @@ public final class XMLDoclet implements Doclet {
     if (annotation == null) return null;
     XMLNode node = new XMLNode("annotation");
     node.attribute("name", annotation.getAnnotationType().asElement().getSimpleName().toString());
-    // TODO
-//    for (ElementValuePair pair : annotation.elementValues()) {
-//      node.child(toPairNode(pair));
-//    }
+    Map<? extends ExecutableElement, ? extends AnnotationValue> values = annotation.getElementValues();
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> pair : values.entrySet()) {
+      node.child(toPairNode(pair.getKey(), pair.getValue()));
+    }
     return node;
   }
 
-//  /**
-//   *
-//   * @return an "element" XML node for the element value pair.
-//   */
-//  private static XMLNode toPairNode(ElementValuePair pair) {
-//    if (pair == null) return null;
-//    XMLNode node = new XMLNode("element");
-//    AnnotationTypeElementDoc element = pair.element();
-//    node.attribute("name", element.name());
-//    node.child(toComment(element));
-//    node.child(toAnnotationValueNode(pair.value()));
-//    return node;
-//  }
-//
-//  /**
-//   *
-//   * @return an "value" or "array" XML node for the annotation value.
-//   */
-//  private static XMLNode toAnnotationValueNode(AnnotationValue value) {
-//    if (value == null) return null;
-//    XMLNode node = null;
-//    Object o = value.value();
-//    Class<?> c = o.getClass();
-//    if (c.isArray()) {
-//      node = new XMLNode("array");
-//      Object[]a = (Object[])o;
-//      for (Object i : a) {
-//        if (i instanceof AnnotationValue) {
-//          node.child(toAnnotationValueNode((AnnotationValue)i));
-//        } else {
-//          System.err.println("Unexpected annotation value type"+i);
-//        }
-//      }
-//    } else {
-//      node = new XMLNode("value");
-//      node.attribute("type", getAnnotationValueType(o));
-//      node.attribute("value", o.toString());
-//    }
-//
-//    return node;
-//  }
+  /**
+   *
+   * @return an "element" XML node for the element value pair.
+   */
+  private static XMLNode toPairNode(ExecutableElement element, AnnotationValue value) {
+    XMLNode node = new XMLNode("element");
+    node.attribute("name", element.getSimpleName().toString());
+// TODO   node.child(toComment(element));
+    node.child(toAnnotationValueNode(value));
+    return node;
+  }
+
+  /**
+   *
+   * @return an "value" or "array" XML node for the annotation value.
+   */
+  private static XMLNode toAnnotationValueNode(AnnotationValue value) {
+    if (value == null) return null;
+    XMLNode node = null;
+    Object o = value.getValue();
+    Class<?> c = o.getClass();
+    if (c.isArray()) { // JDK8
+      node = new XMLNode("array");
+      Object[] a = (Object[]) o;
+      for (Object i : a) {
+        if (i instanceof AnnotationValue) {
+          node.child(toAnnotationValueNode((AnnotationValue) i));
+        } else {
+          System.err.println("Unexpected annotation value type" + i);
+        }
+      }
+    } else if (o instanceof List) { // JDK11
+      node = new XMLNode("array");
+      List<?> list = (List<?>)o;
+      for (Object i : list) {
+        if (i instanceof AnnotationValue) {
+          node.child(toAnnotationValueNode((AnnotationValue)i));
+        } else {
+          System.err.println("Unexpected annotation value type"+i);
+        }
+      }
+    } else {
+      node = new XMLNode("value");
+      node.attribute("type", getAnnotationValueType(o));
+      node.attribute("value", o.toString());
+    }
+
+    return node;
+  }
 
   // Utilities ====================================================================================
 
@@ -763,23 +771,23 @@ public final class XMLDoclet implements Doclet {
     return null;
   }
 
-//  /**
-//   * Returns the value type of the annotation depending on the specified object's class.
-//   *
-//   * @param o the object representing the type of annotation value.
-//   * @return the primitive if any of full class name.
-//   */
-//  private static String getAnnotationValueType(Object o) {
-//    if (o instanceof String)  return "String";
-//    if (o instanceof Integer) return "int";
-//    if (o instanceof Boolean) return "boolean";
-//    if (o instanceof Long)    return "long";
-//    if (o instanceof Short)   return "short";
-//    if (o instanceof Float)   return "float";
-//    if (o instanceof Double)  return "double";
-//    if (o instanceof FieldDoc) return ((FieldDoc)o).containingClass().qualifiedName();
-//    return o.getClass().getName();
-//  }
+  /**
+   * Returns the value type of the annotation depending on the specified object's class.
+   *
+   * @param o the object representing the type of annotation value.
+   * @return the primitive if any of full class name.
+   */
+  private static String getAnnotationValueType(Object o) {
+    if (o instanceof String)  return "String";
+    if (o instanceof Integer) return "int";
+    if (o instanceof Boolean) return "boolean";
+    if (o instanceof Long)    return "long";
+    if (o instanceof Short)   return "short";
+    if (o instanceof Float)   return "float";
+    if (o instanceof Double)  return "double";
+    if (o instanceof Element) return ((Element)o).getEnclosingElement().toString();
+    return o.getClass().getName();
+  }
 
   private String toSimpleType(TypeMirror type) {
     if (type instanceof DeclaredType) {
