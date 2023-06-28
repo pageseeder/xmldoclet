@@ -13,7 +13,7 @@ import java.util.Stack;
  */
 public class Markup {
 
-  private static final List<String> BLOCKS = Arrays.asList("p", "ul", "ol", "table", "pre");
+  private static final List<String> BLOCKS = Arrays.asList("p", "ul", "ol", "table", "pre", "h1", "h2", "h3", "h4", "h5", "h6");
 
   private final Stack<String> elements = new Stack<>();
 
