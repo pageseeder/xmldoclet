@@ -3,39 +3,23 @@
 # XML Doclet
 
 This library defines a Doclet for use with the Javadoc tool in order to
-export Java documentation as XML.
-
-Note: There are other doctlet out there doing the same job, but most of them 
-seem no longer maintained or do not support the notations introduced with Java 5.
-
-How to use:
-```
-javadoc -doclet org.pageseeder.xmldoclet.XMLDoclet \
-    -docletpath pso-xmldoclet-0.9.1.jar:jtidy-r938.jar \
-    -sourcepath <pathlist> [packagenames] -d <directory>
-```
-
-## About this library
-
-To resolve the tools jar dependency update your Maven settings to inlcude
-the `jdk.home` variable. for example:
-
-```xml
- <profile>
-   <id>default-tools.jar</id>
-   <properties>
-     <jdk.home>C:/Program Files/Java/jdk1.8.0_60</jdk.home>
-   </properties>
- </profile>
-```
-
+export Java documentation as XML. This version requires at least JDK11.
 
 ## Testing
 
 ```shell
 javadoc -doclet org.pageseeder.xmldoclet.XMLDoclet \
-        -docletpath build/classes/java/main \
+        -docletpath build/classes/java/main:build/classes/java/test \
+        -taglet org.pageseeder.xmldoclet.tags.ErrorIdTaglet \
+        -taglet org.pageseeder.xmldoclet.tags.GlossaryTaglet \
         -sourcepath src/test/java \
-        --d build/testdoc \
+        -multiple \
+        -d build/testdoc \
         org.example
+```
+
+Or simply
+
+```shell
+javadoc @example/options
 ```
