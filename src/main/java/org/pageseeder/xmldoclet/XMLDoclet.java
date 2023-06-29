@@ -474,8 +474,10 @@ public final class XMLDoclet implements Doclet {
         if (taglet != null) {
           XMLNode tNode = new XMLNode("tag");
           tNode.attribute("name", block.getTagName());
-          String markup = Markup.asString(block.getContent(), this.options, false);
-          tNode.text(markup);
+          String contents = taglet.toString(Collections.singletonList(block), element);
+          tNode.text(contents);
+//          String markup = Markup.asString(block.getContent(), this.options, false);
+//          tNode.text(markup);
           node.child(tNode);
           hasTags = true;
         }
