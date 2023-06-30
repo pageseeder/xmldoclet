@@ -21,7 +21,7 @@ public class Markup {
 
   private final Options options;
 
-  private boolean hasBlocks;
+  private final boolean hasBlocks;
 
   public Markup(Options options, boolean hasBlocks) {
     this.options = options;
@@ -166,7 +166,7 @@ public class Markup {
     if (taglet != null) {
       this.xml.append(taglet.toString(Collections.singletonList(blockTag), null));
     } else {
-      this.xml.append(blockTag.toString());
+      this.xml.append(blockTag);
     }
   }
 

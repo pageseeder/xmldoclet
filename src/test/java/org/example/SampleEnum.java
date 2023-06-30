@@ -3,6 +3,10 @@ package org.example;
 /**
  * A fruity collection.
  *
+ * <p>Some fruit {@verb might} go off.</p>
+ *
+ * @banner Fruits are good for you!
+ *
  * @author John Smith
  * @author Jane Smith
  * @version 1.0

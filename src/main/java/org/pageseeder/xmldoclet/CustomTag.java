@@ -16,6 +16,8 @@
 package org.pageseeder.xmldoclet;
 
 import com.sun.source.doctree.DocTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
+import com.sun.source.doctree.UnknownInlineTagTree;
 import jdk.javadoc.doclet.Taglet;
 
 import javax.lang.model.element.Element;
@@ -130,7 +132,15 @@ public final class CustomTag implements Taglet {
     return this._inline;
   }
 
-  public String toString(DocTree tag, Element el) {
+  private String toString(UnknownBlockTagTree block) {
+    return toString(block.getContent());
+  }
+
+  private String toString(UnknownInlineTagTree inline) {
+    return toString(inline.getContent());
+  }
+
+  public String toString(List<? extends DocTree> contents) {
     String element = this._inline? "span" : "div";
     StringBuilder out = new StringBuilder();
     out.append('<').append(element);
@@ -139,8 +149,7 @@ public final class CustomTag implements Taglet {
       out.append(" title=\"").append(this._title).append('"');
     }
     out.append('>');
-// FIXME   out.append(tag.text());
-    out.append("TODO");
+    out.append(contents);
     out.append("</").append(element).append('>');
     return out.toString();
   }
@@ -148,7 +157,14 @@ public final class CustomTag implements Taglet {
   public String toString(List<? extends DocTree> tags, Element element) {
     StringBuilder out = new StringBuilder();
     for (DocTree t : tags) {
-      out.append(toString(t, element));
+      if (t instanceof UnknownBlockTagTree) {
+        UnknownBlockTagTree block = (UnknownBlockTagTree)t;
+        out.append(toString(block.getContent()));
+      }
+      if (t instanceof UnknownInlineTagTree) {
+        UnknownInlineTagTree inline = (UnknownInlineTagTree)t;
+        out.append(toString(inline.getContent()));
+      }
     }
     return out.toString();
   }

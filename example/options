@@ -1,5 +1,7 @@
 -doclet org.pageseeder.xmldoclet.XMLDoclet
 -docletpath build/classes/java/main:build/classes/java/test
+-tag banner
+-tag verb
 -taglet org.pageseeder.xmldoclet.tags.ErrorIdTaglet
 -taglet org.pageseeder.xmldoclet.tags.GlossaryTaglet
 -sourcepath src/test/java
