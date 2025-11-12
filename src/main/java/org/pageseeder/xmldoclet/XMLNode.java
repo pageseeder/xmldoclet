@@ -28,24 +28,26 @@ import java.util.Map.Entry;
  * Represents an XML node.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class XMLNode {
 
   /**
    * Used in the toString method to provide a carriage-return + line-feed.
    */
-  private static final String CRLF = System.getProperty("line.separator");
+  private static final String CRLF = System.lineSeparator();
 
   /**
    * The element name.
    */
-  private final String _name;
+  private final String name;
 
   /**
    * The source document the node corresponds to.
    */
-  private Element _doc = null;
+  private Element doc;
 
   /**
    * The namespace URI of all nodes.
@@ -55,27 +57,27 @@ public final class XMLNode {
   /**
    * Sets the namespace prefix for this node.
    */
-  private String _namespacePrefix = "";
+  private String namespacePrefix = "";
 
   /**
    * The attributes
    */
-  private final Map<String, String> _attributes;
+  private final Map<String, String> attributes;
 
   /**
    * The child nodes
    */
-  private final List<XMLNode> _children;
+  private final List<XMLNode> children;
 
   /**
    * The content, which may include markup.
    */
-  private final StringBuilder _content;
+  private final StringBuilder content;
 
   /**
    * The line in the source.
    */
-  private final int _line;
+  private final int line;
 
   /**
    * Constructs the XMLNode.
@@ -84,12 +86,12 @@ public final class XMLNode {
    * @param element The source java document the node belongs to.
    */
   public XMLNode(String name, Element element, int line) {
-    this._name = name;
-    this._doc = element;
-    this._attributes = new HashMap<>();
-    this._children = new ArrayList<>();
-    this._content = new StringBuilder();
-    this._line = line;
+    this.name = name;
+    this.doc = element;
+    this.attributes = new HashMap<>();
+    this.children = new ArrayList<>();
+    this.content = new StringBuilder();
+    this.line = line;
   }
 
   /**
@@ -119,7 +121,7 @@ public final class XMLNode {
    */
   public XMLNode attribute(String name, String value) {
     if (value != null) {
-      this._attributes.put(name, value);
+      this.attributes.put(name, value);
     }
     return this;
   }
@@ -131,7 +133,7 @@ public final class XMLNode {
    * @param value the value for the attribute
    */
   public XMLNode attribute(String name, boolean value) {
-    this._attributes.put(name, Boolean.toString(value));
+    this.attributes.put(name, Boolean.toString(value));
     return this;
   }
 
@@ -143,8 +145,8 @@ public final class XMLNode {
    */
   public XMLNode child(List<XMLNode> nodes) {
     for (XMLNode node : nodes) {
-      this._children.add(node);
-      node.setDoc(this._doc);
+      this.children.add(node);
+      node.setDoc(this.doc);
     }
     return this;
   }
@@ -157,8 +159,8 @@ public final class XMLNode {
    */
   public XMLNode child(XMLNode node) {
     if (node != null) {
-      this._children.add(node);
-      node.setDoc(this._doc);
+      this.children.add(node);
+      node.setDoc(this.doc);
     }
     return this;
   }
@@ -170,10 +172,10 @@ public final class XMLNode {
    */
   private void setDoc(Element element) {
     if (element == null) return;
-    if (this._doc == null) {
-      this._doc = element;
+    if (this.doc == null) {
+      this.doc = element;
     }
-    for (XMLNode child : this._children) {
+    for (XMLNode child : this.children) {
       child.setDoc(element);
     }
   }
@@ -186,7 +188,7 @@ public final class XMLNode {
    */
   public XMLNode text(String text) {
     if (text != null) {
-      this._content.append(text);
+      this.content.append(text);
     }
     return this;
   }
@@ -198,14 +200,14 @@ public final class XMLNode {
    * @return The value stored in the attribute hash for the given key.
    */
   public String getAttribute(String name) {
-    return this._attributes.get(name);
+    return this.attributes.get(name);
   }
 
   /**
    * @return The name of the node.
    */
   public String getName() {
-    return this._name;
+    return this.name;
   }
 
   /**
@@ -218,12 +220,12 @@ public final class XMLNode {
    */
   public void save(File dir, String name, Charset encoding, String nsPrefix) {
     try {
-      String _xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + CRLF;
+      String xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + CRLF;
 
-      if (nsPrefix != null && !"".equals(nsPrefix)) {
-        this._namespacePrefix = nsPrefix;
-        this.attribute("xmlns:" + this._namespacePrefix, NAMESPACE_URI);
-        this._namespacePrefix = this._namespacePrefix + ":";
+      if (nsPrefix != null && !nsPrefix.isEmpty()) {
+        this.namespacePrefix = nsPrefix;
+        this.attribute("xmlns:" + this.namespacePrefix, NAMESPACE_URI);
+        this.namespacePrefix = this.namespacePrefix + ":";
       }
 
       if (!dir.exists()) {
@@ -232,12 +234,10 @@ public final class XMLNode {
 
       // Write out to the file
       File file = new File(dir, name);
-      FileOutputStream os = new FileOutputStream(file);
-      BufferedOutputStream bos = new BufferedOutputStream(os);
-      OutputStreamWriter out = new OutputStreamWriter(bos, encoding);
-      out.write(_xmlDeclaration);
-      out.write(this.toString(""));
-      out.close();
+      try (OutputStreamWriter out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), encoding)) {
+        out.write(xmlDeclaration);
+        out.write(this.toString(""));
+      }
 
     } catch (IOException ex) {
       System.err.println("Could not create '" + dir +File.pathSeparator+ name + "'");
@@ -255,42 +255,42 @@ public final class XMLNode {
     StringBuilder out = new StringBuilder();
 
     // Open element
-    out.append(tabs).append("<").append(this._namespacePrefix).append(this._name);
+    out.append(tabs).append("<").append(this.namespacePrefix).append(this.name);
 
     // Serialise the attributes
-    for (Entry<String, String> att : this._attributes.entrySet()) {
+    for (Entry<String, String> att : this.attributes.entrySet()) {
       out.append(" ").append(att.getKey()).append("=\"").append(encodeAttribute(att.getValue())).append("\"");
     }
 
     // Close if empty element (no text node AND no children)
-    if (this._content.length() <= 0 && this._children.isEmpty()) {
+    if (this.content.length() <= 0 && this.children.isEmpty()) {
       out.append(" />").append(CRLF);
       return out.toString();
     }
 
     // Close open tag
     out.append(">");
-    if (!this._children.isEmpty()) {
+    if (!this.children.isEmpty()) {
       out.append(CRLF);
     }
 
     // This node has text
-    if (this._content.length() > 0) {
+    if (this.content.length() > 0) {
       // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(encode(this._content.toString(), this._doc, this._line));
+      out.append(encode(this.content.toString(), this.doc, this.line));
     }
 
     // Serialise children
-    for (XMLNode node : this._children) {
+    for (XMLNode node : this.children) {
       out.append(node.toString(tabs + "\t"));
     }
 
     // Close element
-    if (!this._children.isEmpty()) {
+    if (!this.children.isEmpty()) {
       out.append(tabs);
     }
-    out.append("</").append(this._namespacePrefix).append(this._name).append(">")
-            .append(CRLF).append("class".equalsIgnoreCase(this._name) ? CRLF : "");
+    out.append("</").append(this.namespacePrefix).append(this.name).append(">")
+            .append(CRLF).append("class".equalsIgnoreCase(this.name) ? CRLF : "");
 
     return out.toString();
   }
@@ -313,7 +313,7 @@ public final class XMLNode {
    * @param in The input string.
    * @return The encoded string.
    */
-  protected static String encodeElement(String in) {
+  static String encodeElement(String in) {
     final int length = in.length();
     StringBuilder out = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
@@ -333,7 +333,7 @@ public final class XMLNode {
    * @param in The input string.
    * @return The encoded string.
    */
-  protected static String encodeAttribute(String in) {
+  static String encodeAttribute(String in) {
     final int length = in.length();
     StringBuilder out = new StringBuilder(length);
     for (int i = 0; i < length; i++) {

@@ -37,15 +37,15 @@ public final class CustomTag implements Taglet {
   /**
    * The name of the tag.
    */
-  private final String _name;
+  private final String name;
 
   /**
    * The title/header/description for the tag.
    */
-  private String _title;
+  private String title;
 
   /** Whether the tag appears inline or not. */
-  private final boolean _inline;
+  private final boolean isInline;
 
   private EnumSet<Location> allowedLocations = EnumSet.allOf(Location.class);
 
@@ -53,24 +53,24 @@ public final class CustomTag implements Taglet {
    * Creates a custom tag.
    *
    * @param name   the name of the tag.
-   * @param inline <code>true</code> for inline tags; <code>false</code> otherwise.
+   * @param isInline <code>true</code> for inline tags; <code>false</code> otherwise.
    */
-  public CustomTag(String name, boolean inline) {
-    this._name = name;
-    this._inline = inline;
+  public CustomTag(String name, boolean isInline) {
+    this.name = name;
+    this.isInline = isInline;
   }
 
   /**
    * Creates a custom tag.
    *
    * @param name the name of the tag.
-   * @param inline <code>true</code> for inline tags; <code>false</code> otherwise.
+   * @param isInline <code>true</code> for inline tags; <code>false</code> otherwise.
    * @param title the title of the tag
    */
-  public CustomTag(String name, boolean inline, String title) {
-    this._name = name;
-    this._inline = inline;
-    this._title = title;
+  public CustomTag(String name, boolean isInline, String title) {
+    this.name = name;
+    this.isInline = isInline;
+    this.title = title;
   }
 
   /**
@@ -108,7 +108,7 @@ public final class CustomTag implements Taglet {
 
   @Override
   public String getName() {
-    return this._name;
+    return this.name;
   }
 
   /**
@@ -117,19 +117,19 @@ public final class CustomTag implements Taglet {
    * @param title the title to use for this tag.
    */
   public void setTitle(String title) {
-    this._title = title;
+    this.title = title;
   }
 
   /**
    * @return the title to use for this tag.
    */
   public String getTitle() {
-    return this._title;
+    return this.title;
   }
 
   @Override
   public boolean isInlineTag() {
-    return this._inline;
+    return this.isInline;
   }
 
   private String toString(UnknownBlockTagTree block) {
@@ -141,12 +141,12 @@ public final class CustomTag implements Taglet {
   }
 
   public String toString(List<? extends DocTree> contents) {
-    String element = this._inline? "span" : "div";
+    String element = this.isInline ? "span" : "div";
     StringBuilder out = new StringBuilder();
     out.append('<').append(element);
-    out.append(" class=\"").append(this._name).append('"');
-    if (this._title != null) {
-      out.append(" title=\"").append(this._title).append('"');
+    out.append(" class=\"").append(this.name).append('"');
+    if (this.title != null) {
+      out.append(" title=\"").append(this.title).append('"');
     }
     out.append('>');
     out.append(contents);
@@ -171,6 +171,6 @@ public final class CustomTag implements Taglet {
 
   @Override
   public String toString() {
-    return this._name;
+    return this.name;
   }
 }

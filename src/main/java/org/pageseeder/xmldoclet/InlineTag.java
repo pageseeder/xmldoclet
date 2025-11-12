@@ -193,7 +193,7 @@ public enum InlineTag implements Taglet {
   /**
    * The name of the tag
    */
-  private final String _name;
+  private final String name;
 
   /**
    * Creates a new tag.
@@ -201,12 +201,12 @@ public enum InlineTag implements Taglet {
    * @param name   The name of the tag.
    */
   InlineTag(String name) {
-    this._name = name;
+    this.name = name;
   }
 
   @Override
   public String getName() {
-    return this._name;
+    return this.name;
   }
 
   @Override
@@ -259,9 +259,9 @@ public enum InlineTag implements Taglet {
   private static String getLinkPackage(LinkTree tag) {
     String spec = getLinkSpec(tag);
     int dot = spec.lastIndexOf('.');
-    if (dot >= 0) // Package was included in reference
-    return spec.substring(0, dot);
-    else {
+    if (dot >= 0) { // Package was included in reference
+      return spec.substring(0, dot);
+    } else {
       // FIXME Get package from doc
 //      Doc doc = tag.holder();
 //      spec = doc.toString();

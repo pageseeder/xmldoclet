@@ -84,7 +84,7 @@ public enum BlockTag implements Taglet {
   /**
    * The name of the tag
    */
-  private final String _name;
+  private final String name;
 
   /**
    * Creates a new tag.
@@ -92,7 +92,7 @@ public enum BlockTag implements Taglet {
    * @param name   The name of the tag.
    */
   BlockTag(String name) {
-    this._name = name;
+    this.name = name;
   }
 
   public XMLNode toXMLNode(DocTree tag) {
@@ -130,24 +130,24 @@ public enum BlockTag implements Taglet {
 
     }
     if (tag instanceof SinceTree) {
-      return new XMLNode(this._name).text(((SinceTree) tag).getBody().toString());
+      return new XMLNode(this.name).text(((SinceTree) tag).getBody().toString());
     }
     if (tag instanceof ThrowsTree) {
       // TODO
-      return new XMLNode(this._name).text(((ThrowsTree) tag).getDescription().toString());
+      return new XMLNode(this.name).text(((ThrowsTree) tag).getDescription().toString());
     }
     if (tag instanceof UnknownBlockTagTree) {
       // TODO
-      return new XMLNode(this._name).text(((UnknownBlockTagTree) tag).getContent().toString());
+      return new XMLNode(this.name).text(((UnknownBlockTagTree) tag).getContent().toString());
     }
     if (tag instanceof UsesTree) {
       // TODO
-      return new XMLNode(this._name).text(((UsesTree) tag).getDescription().toString());
+      return new XMLNode(this.name).text(((UsesTree) tag).getDescription().toString());
     }
     if (tag instanceof VersionTree) {
       return new XMLNode("version").text(((VersionTree) tag).getBody().toString());
     }
-    return new XMLNode(this._name).text(tag.toString());
+    return new XMLNode(this.name).text(tag.toString());
   }
 
   /**
@@ -171,7 +171,7 @@ public enum BlockTag implements Taglet {
 
   @Override
   public String getName() {
-    return this._name;
+    return this.name;
   }
 
   @Override

@@ -60,7 +60,7 @@ public final class AnnotatedOption extends XMLDocletOptionBase {
   }
 
   public boolean hasFilter() {
-    return this.annotations.size() > 0;
+    return !this.annotations.isEmpty();
   }
 
   /**
@@ -72,8 +72,8 @@ public final class AnnotatedOption extends XMLDocletOptionBase {
    */
   public boolean matches(TypeElement element) {
     if (this.annotations.isEmpty()) return true;
-    List<? extends AnnotationMirror> annotations = element.getAnnotationMirrors();
-    for (AnnotationMirror i : annotations) {
+    List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
+    for (AnnotationMirror i : annotationMirrors) {
       // TODO Previous version supported matching the simple name also
       String name = i.getAnnotationType().asElement().toString();
       if (this.annotations.contains(name)) return true;
