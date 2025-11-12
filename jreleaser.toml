@@ -1,0 +1,40 @@
+[project]
+name = "xmldoclet"
+description = "Generate your java documentation as XML"
+longDescription = """
+
+"""
+tags = ["xml", "java", "javadoc"]
+authors = ["Christophe Lauret"]
+license = "Apache-2.0"
+inceptionYear = "2015"
+vendor = "Allette Systems"
+
+# Organization info
+[project.links]
+homepage = "https://github.com/pageseeder/xmldoclet"
+documentation = "https://github.com/pageseeder/xmldoclet"
+license = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+
+# Java-specific configuration
+[project.languages.java]
+groupId = "org.pageseeder.xmldoclet"
+
+# Git configuration
+[release.github]
+owner = "pageseeder"
+name = "xmldoclet"
+username = "pageseeder"
+branch = "master"
+
+# Signing configuration
+[signing]
+active = "ALWAYS"
+armored = true
+mode = "FILE"
+
+# Maven deployment configuration
+[deploy.maven.mavenCentral.sonatype]
+active = "ALWAYS"
+url = "https://central.sonatype.com/api/v1/publisher"
+stagingRepositories = ["build/staging-deploy"]

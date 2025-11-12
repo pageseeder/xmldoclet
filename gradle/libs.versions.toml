@@ -1,0 +1,22 @@
+[versions]
+junit = "5.13.2"
+junit-platform = "1.13.2"
+
+[libraries]
+annotations = { module = "org.eclipse.jdt:org.eclipse.jdt.annotation", version = "2.3.100" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "junit-platform" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+
+[bundles]
+junit = [
+    "junit-jupiter-api",
+    "junit-platform-launcher",
+    "junit-platform-engine"
+]
+
+[plugins]
+jreleaser = { id = "org.jreleaser", version = "1.18.0" }
+sonar = { id = "org.sonarqube", version = "6.2.0.5505" }
