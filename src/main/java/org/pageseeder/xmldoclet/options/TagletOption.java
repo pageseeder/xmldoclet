@@ -2,7 +2,6 @@ package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.Taglet;
-import org.pageseeder.xmldoclet.CustomTag;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;

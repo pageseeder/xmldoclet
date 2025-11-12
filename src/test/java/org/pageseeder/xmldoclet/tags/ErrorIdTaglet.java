@@ -2,10 +2,7 @@ package org.pageseeder.xmldoclet.tags;
 
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.UnknownBlockTagTree;
-import com.sun.source.doctree.UnknownInlineTagTree;
 import jdk.javadoc.doclet.Taglet;
-import org.pageseeder.xmldoclet.Markup;
-import org.pageseeder.xmldoclet.Options;
 
 import javax.lang.model.element.Element;
 import java.util.EnumSet;
