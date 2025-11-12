@@ -60,7 +60,7 @@ public class ExtendsOption extends XMLDocletOptionBase {
   }
 
   public boolean hasFilter() {
-    return this.superclasses.size() > 0;
+    return !this.superclasses.isEmpty();
   }
 
   /**

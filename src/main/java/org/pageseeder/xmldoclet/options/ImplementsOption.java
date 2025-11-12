@@ -57,7 +57,7 @@ public class ImplementsOption extends XMLDocletOptionBase {
   }
 
   public boolean hasFilter() {
-    return this.interfaces.size() > 0;
+    return !this.interfaces.isEmpty();
   }
 
 
