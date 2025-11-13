@@ -31,7 +31,9 @@ import org.pageseeder.xmldoclet.options.*;
  * Container for the options for the XML Doclet.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class Options {
 
@@ -39,8 +41,6 @@ public final class Options {
    * The taglets loaded by this doclet.
    */
   private final Map<String, Taglet> taglets = new HashMap<>();
-
-  private final Reporter reporter;
 
   private final AnnotatedOption annotatedOption;
 
@@ -68,7 +68,6 @@ public final class Options {
    * @param reporter The reporter to use.
    */
   public Options(Reporter reporter) {
-    this.reporter = reporter;
     this.annotatedOption = new AnnotatedOption(reporter);
     this.directoryOption = new DirectoryOption(reporter);
     this.docencodingOption = new DocencodingOption(reporter);
@@ -198,7 +197,7 @@ public final class Options {
     return included;
   }
 
-  public Set<? extends Doclet.Option> asSet() {
+  public Set<Doclet.Option> asSet() {
     Set<Doclet.Option> options = new HashSet<>();
     options.add(this.annotatedOption);
     options.add(this.directoryOption);
