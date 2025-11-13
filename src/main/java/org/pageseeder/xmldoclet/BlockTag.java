@@ -50,9 +50,9 @@ public enum BlockTag implements Taglet {
 
   SERIAL("serial"),
 
-  SERIALDATA("serialData"),
+  SERIAL_DATA("serialData"),
 
-  SERIALFIELD("serialField"),
+  SERIAL_FIELD("serialField"),
 
   SINCE("since") {
     @Override
