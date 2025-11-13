@@ -53,7 +53,7 @@ public final class TagOption extends XMLDocletOptionBase {
     String spec = arguments.get(0);
     int colon = spec.indexOf(':');
     String name = colon < 0 ? spec : spec.substring(0, colon);
-    if (!CustomTag.isValidScope(name)) {
+    if (!CustomTag.isValidName(name)) {
       error("Invalid name for custom tag " + name);
       return false;
     }
