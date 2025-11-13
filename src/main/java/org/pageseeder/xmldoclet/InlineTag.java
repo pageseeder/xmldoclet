@@ -30,7 +30,9 @@ import java.util.Set;
  * <p>These will replace text within comments using XHTML for links.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public enum InlineTag implements Taglet {
 
@@ -48,9 +50,10 @@ public enum InlineTag implements Taglet {
     @Override
     public String toString(DocTree tag, Element element) {
       if (tag instanceof LiteralTree) {
-        return "<code><![CDATA["+((LiteralTree)tag).getBody()+"]]></code>";
+        LiteralTree literal = ((LiteralTree)tag);
+        return "<code>"+maybeCDATA(literal.getBody().toString())+"</code>";
       }
-      return "<code><![CDATA["+tag+"]]></code>";
+      return "<code>"+maybeCDATA(tag.toString())+"</code>";
     }
 
   },
@@ -80,10 +83,10 @@ public enum InlineTag implements Taglet {
    * Inherits (copies) documentation from the "nearest" inheritable class or implementable interface into the current
    * doc comment at this tag's location.
    *
-   * This allows you to write more general comments higher up the inheritance tree, and to write around the copied
+   * <p>This allows you to write more general comments higher up the inheritance tree, and to write around the copied
    * text.
    *
-   * This tag is valid only in these places in a doc comment:
+   * <p>This tag is valid only in these places in a doc comment:
    * <ul>
    *   <li>In the main description block of a method. In this case, the main description is copied from a class
    *   or interface up the hierarchy.</li>
@@ -106,10 +109,10 @@ public enum InlineTag implements Taglet {
    * Inserts an in-line link with visible text label that points to the documentation for the specified package,
    * class or member name of a referenced class.
    *
-   * This tag is valid in all doc comments: overview, package, class, interface, constructor, method and field,
+   * <p>This tag is valid in all doc comments: overview, package, class, interface, constructor, method and field,
    * including the text portion of any tag.
    *
-   * This syntax this tag is:
+   * <p>This syntax this tag is:
    * <pre>package.class#member label</pre>
    *
    * <p>If you need to use "}" inside the label, use the HTML entity notation <code>&amp;#125;</code>.
@@ -158,9 +161,9 @@ public enum InlineTag implements Taglet {
     public String toString(DocTree tag, Element element) {
       if (tag instanceof LiteralTree) {
         LiteralTree literal = ((LiteralTree)tag);
-        return "<![CDATA["+literal.getBody().toString()+"]]>";
+        return maybeCDATA(literal.getBody().toString());
       }
-      return "<![CDATA["+tag.toString()+"]]>";
+      return maybeCDATA(tag.toString());
     }
 
   },
@@ -184,7 +187,7 @@ public enum InlineTag implements Taglet {
         // TODO
         return "<var>"+ref.getSignature()+"</var>";
       }
-      return "<var>"+tag.toString()+"</var>";
+      return "<var>"+tag+"</var>";
     }
 
   };
@@ -338,4 +341,13 @@ public enum InlineTag implements Taglet {
     html.append('>').append(label).append("</a>");
     return html.toString();
   }
+
+  private static String maybeCDATA(String value) {
+    if (value.indexOf('<') >= 0 || value.indexOf('>') >= 0 || value.indexOf('&') >= 0) {
+      return "<![CDATA["+value+"]]>";
+    } else {
+      return value;
+    }
+  }
+
 }
