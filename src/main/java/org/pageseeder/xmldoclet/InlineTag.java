@@ -17,6 +17,7 @@ package org.pageseeder.xmldoclet;
 
 import com.sun.source.doctree.*;
 import jdk.javadoc.doclet.Taglet;
+import org.eclipse.jdt.annotation.Nullable;
 
 import javax.lang.model.element.Element;
 import java.util.EnumSet;
@@ -130,7 +131,7 @@ public enum InlineTag implements Taglet {
   /**
    * Identical to "link", except the link's label is displayed in plain text than code font.
    *
-   * Useful when the label is plain text.
+   * <p>Useful when the label is plain text.
    *
    * @see <a href="http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#linkplain">@linkplain tag</a>
    */
@@ -268,7 +269,7 @@ public enum InlineTag implements Taglet {
 //      if (doc.isClass() || doc.isMethod() || doc.isConstructor() || doc.isAnnotationType() || doc.isEnum()) {
 //        dot = spec.lastIndexOf('.');
 //      }
-      return dot >= 0? spec.substring(0, dot) : spec;
+      return spec;
     }
   }
 
@@ -299,7 +300,7 @@ public enum InlineTag implements Taglet {
    * @param tag The tag to analyse
    * @return the member component of the tag.
    */
-  private static String getLinkMember(LinkTree tag) {
+  private static @Nullable String getLinkMember(LinkTree tag) {
     String spec = getLinkSpec(tag);
     int hash = spec.indexOf('#');
     return hash >= 0? spec.substring(hash+1) : null;

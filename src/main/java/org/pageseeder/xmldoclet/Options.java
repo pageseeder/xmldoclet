@@ -24,6 +24,7 @@ import javax.lang.model.element.TypeElement;
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.Taglet;
+import org.eclipse.jdt.annotation.Nullable;
 import org.pageseeder.xmldoclet.options.*;
 
 /**
@@ -63,6 +64,8 @@ public final class Options {
 
   /**
    * Creates new options.
+   *
+   * @param reporter The reporter to use.
    */
   public Options(Reporter reporter) {
     this.reporter = reporter;
@@ -80,6 +83,8 @@ public final class Options {
 
   /**
    * Indicates whether these options should use multiple files.
+   *
+   * @return <code>true</code> if multiple files should be used; <code>false</code> otherwise.
    */
   public boolean useMultipleFiles() {
     return this.multipleOption.enabled();
@@ -87,6 +92,8 @@ public final class Options {
 
   /**
    * Indicates whether to organise files as subfolders for packages.
+   *
+   * @return <code>true</code> if files should be organised in subfolders; <code>false</code> otherwise.
    */
   public boolean useSubFolders() {
     return this.subfoldersOption.enabled();
@@ -125,7 +132,7 @@ public final class Options {
    * @param name The name of the tag.
    * @return The corresponding <code>Taglet</code> or <code>null</code>.
    */
-  public Taglet getTagletForName(String name) {
+  public @Nullable Taglet getTagletForName(String name) {
     return getTaglets().get(name);
   }
 
