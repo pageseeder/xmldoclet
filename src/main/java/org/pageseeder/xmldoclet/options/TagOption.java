@@ -11,7 +11,9 @@ import java.util.List;
  * Option to specify custom tags to use for the documentation.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class TagOption extends XMLDocletOptionBase {
 
@@ -43,15 +45,18 @@ public final class TagOption extends XMLDocletOptionBase {
 
   @Override
   public String getParameters() {
-    return "<name>:<scope>";
+    return "<name>:<scope>?:<title>?";
   }
 
   @Override
   public boolean process(String option, List<String> arguments) {
     String spec = arguments.get(0);
     int colon = spec.indexOf(':');
-    // TODO Check spec is valid XML name
     String name = colon < 0 ? spec : spec.substring(0, colon);
+    if (!CustomTag.isValidScope(name)) {
+      error("Invalid name for custom tag " + name);
+      return false;
+    }
     CustomTag tag = new CustomTag(name, false);
     if (colon >= 0) {
       // scope
@@ -61,6 +66,9 @@ public final class TagOption extends XMLDocletOptionBase {
         String title = scope.substring(colon + 1);
         scope = scope.substring(0, colon);
         tag.setTitle(title);
+      }
+      if (!CustomTag.isValidScope(scope)) {
+        warning("Invalid scope for custom tag " + name + ": " + scope);
       }
       tag.setScope(scope);
     }
@@ -72,5 +80,7 @@ public final class TagOption extends XMLDocletOptionBase {
   public List<CustomTag> getTags() {
     return this.tags;
   }
+
+
 
 }

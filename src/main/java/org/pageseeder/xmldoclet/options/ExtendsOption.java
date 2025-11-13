@@ -5,18 +5,19 @@ import jdk.javadoc.doclet.Reporter;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Option to filter classes extending the specified class.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public class ExtendsOption extends XMLDocletOptionBase {
 
-  public List<String> superclasses = new ArrayList<>();
+  private final List<String> superclasses = new ArrayList<>();
 
   public ExtendsOption(Reporter reporter) {
     super(reporter);
@@ -39,7 +40,7 @@ public class ExtendsOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-extends");
+    return List.of("-extends");
   }
 
   @Override
@@ -59,6 +60,11 @@ public class ExtendsOption extends XMLDocletOptionBase {
     return this.superclasses;
   }
 
+  /**
+   * Determines if there are any filters set for the superclasses.
+   *
+   * @return true if there is at least one superclass filter; false otherwise.
+   */
   public boolean hasFilter() {
     return !this.superclasses.isEmpty();
   }

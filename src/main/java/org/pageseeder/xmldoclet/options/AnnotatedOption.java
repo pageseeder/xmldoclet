@@ -12,7 +12,9 @@ import java.util.List;
  * Option to filter classes with the specified annotation.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class AnnotatedOption extends XMLDocletOptionBase {
 
@@ -74,7 +76,6 @@ public final class AnnotatedOption extends XMLDocletOptionBase {
     if (this.annotations.isEmpty()) return true;
     List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
     for (AnnotationMirror i : annotationMirrors) {
-      // TODO Previous version supported matching the simple name also
       String name = i.getAnnotationType().asElement().toString();
       if (this.annotations.contains(name)) return true;
     }

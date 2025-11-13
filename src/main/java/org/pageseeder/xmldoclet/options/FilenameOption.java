@@ -1,6 +1,7 @@
 package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
+import org.eclipse.jdt.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +14,9 @@ import java.util.List;
  * @see MultipleOption
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class FilenameOption extends XMLDocletOptionBase {
 
@@ -55,7 +58,14 @@ public final class FilenameOption extends XMLDocletOptionBase {
 
   @Override
   public boolean process(String option, List<String> arguments) {
-    this.filename = arguments.get(0);
+    String name = arguments.get(0);
+    if (isValidFilename(name)) {
+      this.filename = name;
+      note("Output filename: "+name);
+    } else {
+      error("Invalid filename: "+name+" - must be a valid filename");
+      return false;
+    }
     return true;
   }
 
@@ -63,4 +73,31 @@ public final class FilenameOption extends XMLDocletOptionBase {
     return this.filename;
   }
 
+  // Java
+  private static boolean isValidFilename(@Nullable String filename) {
+    // Disallow empty and null
+    if (filename == null || filename.trim().isEmpty()) return false;
+
+    // Define a pattern for invalid characters (for Windows and cross-platform safety)
+    String invalidChars = "[\\\\/:*?\"<>|]";
+    if (filename.matches(".*" + invalidChars + ".*")) return false;
+
+    // Optionally, limit the length (common maximum for most OSes is 255)
+    if (filename.length() > 255) return false;
+
+    // Disallow reserved names (Windows)
+    String[] reserved = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    };
+    for (String res : reserved) {
+      if (filename.equalsIgnoreCase(res) || filename.toUpperCase().startsWith(res + ".")) {
+        return false;
+      }
+    }
+
+    // Looks good
+    return true;
+  }
 }

@@ -3,14 +3,15 @@ package org.pageseeder.xmldoclet.options;
 import jdk.javadoc.doclet.Reporter;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Option to specify the output directory of the doclet.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class DirectoryOption extends XMLDocletOptionBase {
 
@@ -37,7 +38,7 @@ public final class DirectoryOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-d");
+    return List.of("-d");
   }
 
   @Override

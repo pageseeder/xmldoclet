@@ -22,10 +22,7 @@ import jdk.javadoc.doclet.Taglet;
 import org.eclipse.jdt.annotation.Nullable;
 
 import javax.lang.model.element.Element;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A custom tag for tags specified using the -tag option.
@@ -34,6 +31,12 @@ import java.util.Set;
  * @version 1.0
  */
 public final class CustomTag implements Taglet {
+
+  /**
+   * The custom tag must be a valid XML name regex per XML 1.0 spec
+   * and a valid Java identifier, but allowing `.`
+   */
+  private static final String VALID_NAME_REGEX = "[A-Z_a-z][A-Za-z0-9_.]*";
 
   /**
    * The name of the tag.
@@ -57,7 +60,7 @@ public final class CustomTag implements Taglet {
    * @param isInline <code>true</code> for inline tags; <code>false</code> otherwise.
    */
   public CustomTag(String name, boolean isInline) {
-    this.name = name;
+    this.name = Objects.requireNonNull(name);
     this.isInline = isInline;
   }
 
@@ -69,7 +72,7 @@ public final class CustomTag implements Taglet {
    * @param title the title of the tag
    */
   public CustomTag(String name, boolean isInline, String title) {
-    this.name = name;
+    this.name = Objects.requireNonNull(name);
     this.isInline = isInline;
     this.title = title;
   }
@@ -176,4 +179,39 @@ public final class CustomTag implements Taglet {
   public String toString() {
     return this.name;
   }
+
+  /**
+   * Validates whether the provided name is valid based on a predefined format.
+   *
+   * @param name the name to validate, which may be {@code null}.
+   * @return {@code true} if the name is not {@code null} and matches the expected format;
+   *         {@code false} otherwise.
+   */
+  public static boolean isValidName(@Nullable String name) {
+    return name != null && name.matches(VALID_NAME_REGEX);
+  }
+
+  /**
+   * Validates whether the given scope is valid by ensuring it contains
+   * only allowed characters ('a', 'o', 'p', 't', 'c', 'm', 'f') without duplicates.
+   *
+   * @param scope the input string representing the scope to validate.
+   * @return true if the scope is valid (contains only allowed characters
+   *         and no duplicates); false otherwise.
+   */
+  public static boolean isValidScope(String scope) {
+    // Only allowed characters
+    String allowed = "aoptcmf";
+    // Ensure no duplicates and only allowed characters
+    boolean[] used = new boolean[allowed.length()];
+    for (int i = 0; i < scope.length(); i++) {
+      char ch = scope.charAt(i);
+      int idx = allowed.indexOf(ch);
+      if (idx == -1) return false; // Invalid char
+      if (used[idx]) return false; // Duplicate char
+      used[idx] = true;
+    }
+    return true;
+  }
+
 }

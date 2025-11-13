@@ -2,7 +2,6 @@ package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,7 +11,7 @@ import java.util.List;
  * @author Christophe Lauret
  * @version 1.0
  */
-public class MultipleOption extends XMLDocletOptionBase implements Serializable {
+public class MultipleOption extends XMLDocletOptionBase {
 
   private boolean enabled = false;
 

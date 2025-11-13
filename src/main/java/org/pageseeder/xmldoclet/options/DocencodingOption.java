@@ -4,7 +4,6 @@ import jdk.javadoc.doclet.Reporter;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,7 +12,9 @@ import java.util.List;
  * <p>Defaults to UTF-8.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class DocencodingOption extends XMLDocletOptionBase {
 
@@ -40,7 +41,7 @@ public final class DocencodingOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-docencoding");
+    return List.of("-docencoding");
   }
 
   @Override
