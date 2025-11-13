@@ -15,6 +15,8 @@
  */
 package org.pageseeder.xmldoclet;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import javax.lang.model.element.Element;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -35,9 +37,9 @@ import java.util.Map.Entry;
 public final class XMLNode {
 
   /**
-   * Used in the toString method to provide a carriage-return + line-feed.
+   * Used the line separator for new lines in XML output.
    */
-  private static final String CRLF = System.lineSeparator();
+  private static final String NEW_LINE = System.lineSeparator();
 
   /**
    * The element name.
@@ -47,7 +49,7 @@ public final class XMLNode {
   /**
    * The source document the node corresponds to.
    */
-  private Element doc;
+  private @Nullable Element doc;
 
   /**
    * The namespace URI of all nodes.
@@ -84,8 +86,9 @@ public final class XMLNode {
    *
    * @param name The name of the element
    * @param element The source java document the node belongs to.
+   * @param line The line in the source.
    */
-  public XMLNode(String name, Element element, int line) {
+  public XMLNode(String name, @Nullable Element element, int line) {
     this.name = name;
     this.doc = element;
     this.attributes = new HashMap<>();
@@ -100,7 +103,7 @@ public final class XMLNode {
    * @param name The name of the element
    * @param element The source java document the node belongs to.
    */
-  public XMLNode(String name, Element element) {
+  public XMLNode(String name, @Nullable Element element) {
     this(name, element, -1);
   }
 
@@ -118,8 +121,10 @@ public final class XMLNode {
    *
    * @param name  the name of the attribute.
    * @param value the value for the attribute
+   *
+   * @return this node for chaining.
    */
-  public XMLNode attribute(String name, String value) {
+  public XMLNode attribute(String name, @Nullable String value) {
     if (value != null) {
       this.attributes.put(name, value);
     }
@@ -131,6 +136,8 @@ public final class XMLNode {
    *
    * @param name  the name of the attribute
    * @param value the value for the attribute
+   *
+   * @return this node for chaining.
    */
   public XMLNode attribute(String name, boolean value) {
     this.attributes.put(name, Boolean.toString(value));
@@ -141,6 +148,7 @@ public final class XMLNode {
    * Adds a list of child nodes.
    *
    * @param nodes The nodes to add.
+   *
    * @return this node for chaining.
    */
   public XMLNode child(List<XMLNode> nodes) {
@@ -155,9 +163,10 @@ public final class XMLNode {
    * Adds a child node.
    *
    * @param node The node
+   *
    * @return this node for chaining.
    */
-  public XMLNode child(XMLNode node) {
+  public XMLNode child(@Nullable XMLNode node) {
     if (node != null) {
       this.children.add(node);
       node.setDoc(this.doc);
@@ -170,7 +179,7 @@ public final class XMLNode {
    *
    * @param element the doc
    */
-  private void setDoc(Element element) {
+  private void setDoc(@Nullable Element element) {
     if (element == null) return;
     if (this.doc == null) {
       this.doc = element;
@@ -186,7 +195,7 @@ public final class XMLNode {
    * @param text The text.
    * @return this node for chaining.
    */
-  public XMLNode text(String text) {
+  public XMLNode text(@Nullable String text) {
     if (text != null) {
       this.content.append(text);
     }
@@ -215,33 +224,33 @@ public final class XMLNode {
    *
    * @param dir  the directory to save this node to.
    * @param name the name of the file
+   * @param nsPrefix the namespace prefix to use for this node
    *
    * @param encoding the character encoding used for the output.
+   *
+   * @throws DocletException if the file could not be saved.
    */
-  public void save(File dir, String name, Charset encoding, String nsPrefix) {
-    try {
-      String xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + CRLF;
+  public void save(File dir, String name, Charset encoding, @Nullable String nsPrefix) throws DocletException {
+    String xmlDeclaration = "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>" + NEW_LINE;
 
-      if (nsPrefix != null && !nsPrefix.isEmpty()) {
-        this.namespacePrefix = nsPrefix;
-        this.attribute("xmlns:" + this.namespacePrefix, NAMESPACE_URI);
-        this.namespacePrefix = this.namespacePrefix + ":";
-      }
+    if (nsPrefix != null && !nsPrefix.isEmpty()) {
+      this.namespacePrefix = nsPrefix;
+      this.attribute("xmlns:" + this.namespacePrefix, NAMESPACE_URI);
+      this.namespacePrefix = this.namespacePrefix + ":";
+    }
 
-      if (!dir.exists()) {
-        dir.mkdirs();
-      }
+    if (!dir.exists()) {
+      boolean created = dir.mkdirs();
+      if (!created) throw new DocletException(this.doc, "Unable to create directory "+dir.getAbsolutePath());
+    }
 
-      // Write out to the file
-      File file = new File(dir, name);
-      try (OutputStreamWriter out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), encoding)) {
-        out.write(xmlDeclaration);
-        out.write(this.toString(""));
-      }
-
+    // Write out to the file
+    File file = new File(dir, name);
+    try (OutputStreamWriter out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)), encoding)) {
+      out.write(xmlDeclaration);
+      out.write(this.toString(""));
     } catch (IOException ex) {
-      System.err.println("Could not create '" + dir +File.pathSeparator+ name + "'");
-      ex.printStackTrace();
+      throw new DocletException(this.doc, "Unable to save XML file: "+file.getAbsolutePath(), ex);
     }
   }
 
@@ -264,14 +273,14 @@ public final class XMLNode {
 
     // Close if empty element (no text node AND no children)
     if (this.content.length() <= 0 && this.children.isEmpty()) {
-      out.append(" />").append(CRLF);
+      out.append(" />").append(NEW_LINE);
       return out.toString();
     }
 
     // Close open tag
     out.append(">");
     if (!this.children.isEmpty()) {
-      out.append(CRLF);
+      out.append(NEW_LINE);
     }
 
     // This node has text
@@ -290,7 +299,7 @@ public final class XMLNode {
       out.append(tabs);
     }
     out.append("</").append(this.namespacePrefix).append(this.name).append(">")
-            .append(CRLF).append("class".equalsIgnoreCase(this.name) ? CRLF : "");
+            .append(NEW_LINE).append("class".equalsIgnoreCase(this.name) ? NEW_LINE : "");
 
     return out.toString();
   }
@@ -302,7 +311,7 @@ public final class XMLNode {
    * @param element The source java document the node belongs to.
    * @return The encoded string.
    */
-  private static String encode(String text, Element element, int line) {
+  private static String encode(String text, @Nullable Element element, int line) {
     if (text.indexOf('<') >= 0) return text;
     else return encodeElement(text);
   }

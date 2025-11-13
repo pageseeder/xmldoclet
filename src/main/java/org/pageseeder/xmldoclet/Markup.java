@@ -1,35 +1,54 @@
 package org.pageseeder.xmldoclet;
 
 import com.sun.source.doctree.*;
+import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.Taglet;
+import org.eclipse.jdt.annotation.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
+import javax.lang.model.element.Element;
+import javax.tools.Diagnostic;
+import java.util.*;
 
 /**
  * Holds XML data
  */
 public class Markup {
 
-  private static final List<String> BLOCKS = Arrays.asList("p", "ul", "ol", "table", "pre", "h1", "h2", "h3", "h4", "h5", "h6");
+  private static final List<String> BLOCKS = List.of("p", "ul", "ol", "table", "pre", "h1", "h2", "h3", "h4", "h5", "h6");
 
-  private final Stack<String> elements = new Stack<>();
+  private final Deque<String> elements = new ArrayDeque<>();
 
   private final StringBuilder xml = new StringBuilder();
 
   private final Options options;
 
+  private final Reporter reporter;
+
   private final boolean hasBlocks;
 
-  public Markup(Options options, boolean hasBlocks) {
+  private @Nullable Element typeElement = null;
+
+  public Markup(Options options, Reporter reporter, boolean hasBlocks) {
     this.options = options;
+    this.reporter = reporter;
     this.hasBlocks = hasBlocks;
   }
 
-  public static String asString(List<? extends DocTree> trees, Options options, boolean hasBlocks) {
-    Markup markup = new Markup(options, hasBlocks);
+  /**
+   * Converts the given element and associated documentation trees into a formatted string
+   * representation according to the provided options.
+   *
+   * @param element    The element to be represented as a string.
+   * @param trees      A list of documentation trees associated with the element.
+   * @param options    Configuration options affecting the output.
+   * @param reporter   A reporter used for logging or error reporting during processing.
+   * @param hasBlocks  Indicates whether block elements are present in the input data.
+   *
+   * @return A formatted string representation of the element and its associated documentation trees.
+   */
+  public static String toString(Element element, List<? extends DocTree> trees, Options options, Reporter reporter, boolean hasBlocks) {
+    Markup markup = new Markup(options, reporter, hasBlocks);
+    markup.typeElement = element;
     markup.addAll(trees);
     return markup.toString();
   }
@@ -140,11 +159,12 @@ public class Markup {
       String name = end.getName().toString();
       String parent = getContext();
       String closed = null;
-      while (parent != null && !name.equals(closed)) {
-        closed = closeElement();
-      }
-      if (!name.equals(closed)) {
-        System.err.println("Unable to close "+name);
+      if (!this.elements.contains(name)) {
+        this.reporter.print(Diagnostic.Kind.WARNING, typeElement, "Found </"+name+"> but element was never open, ignoring");
+      } else {
+        while (parent != null && !name.equals(closed)) {
+          closed = closeElement();
+        }
       }
     }
   }
@@ -182,9 +202,8 @@ public class Markup {
     }
   }
 
-  private String getContext() {
-    return this.elements.empty() ? null : this.elements.peek();
+  private @Nullable String getContext() {
+    return this.elements.isEmpty() ? null : this.elements.peek();
   }
-
 
 }
