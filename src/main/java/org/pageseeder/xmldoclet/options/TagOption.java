@@ -4,7 +4,6 @@ import jdk.javadoc.doclet.Reporter;
 import org.pageseeder.xmldoclet.CustomTag;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,7 +39,7 @@ public final class TagOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-tag");
+    return List.of("-tag");
   }
 
   @Override

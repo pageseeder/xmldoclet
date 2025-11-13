@@ -5,7 +5,6 @@ import jdk.javadoc.doclet.Reporter;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public class ImplementsOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-implements");
+    return List.of("-implements");
   }
 
   @Override

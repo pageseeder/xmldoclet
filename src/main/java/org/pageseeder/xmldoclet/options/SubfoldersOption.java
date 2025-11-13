@@ -2,7 +2,6 @@ package org.pageseeder.xmldoclet.options;
 
 import jdk.javadoc.doclet.Reporter;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,7 +37,7 @@ public class SubfoldersOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-subfolders");
+    return List.of("-subfolders");
   }
 
   @Override
