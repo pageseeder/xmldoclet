@@ -19,7 +19,7 @@ public enum SampleEnum {
   ORANGES,
 
   /**
-   * @deprecated We don't like pineapples anymore.
+   * @deprecated We don't like pineapples anymore, use {@link #APPLE} instead
    */
   @Deprecated
   PINEAPPLE

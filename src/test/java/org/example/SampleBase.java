@@ -7,9 +7,13 @@ package org.example;
  *
  * <p>With an mismatching <code>element</cde>
  *
+ * <p>A constant {@value #CONSTANT}</p>
+ *
  * @error-id 1234 An error ID
  */
 public abstract class SampleBase implements SampleInterface {
+
+  public static final int CONSTANT = 123;
 
   protected final String something;
 

@@ -1,5 +1,6 @@
 package org.example;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -14,13 +15,16 @@ import java.util.Objects;
  * </ul>
  *
  * @see NestedStatic#toString()
+ * @see <a href="https://example.org">Example 1</a>
  *
  * @version 1.0
  * @version 2.0
- * @since 0.5
+ * @since 0.5&<
  * @since 0.6
+ *
+ * @param <T> The type of the thing.
  */
-public class SampleImpl extends SampleBase {
+public class SampleImpl<T> extends SampleBase {
 
   SampleImpl(String something) {
     super(something);
@@ -31,7 +35,12 @@ public class SampleImpl extends SampleBase {
     // Do nothing
   }
 
-  public static class NestedStatic {
+  public static class NestedStatic implements Serializable {
+
+    /**
+     * @serial The serial version UID.
+     */
+    private static final long serialVersionUID = 1L;
 
     /**
      * The default name to use.
@@ -46,7 +55,7 @@ public class SampleImpl extends SampleBase {
     final String _name;
 
     /**
-     * @param name The suggested name.
+     * @param name The suggested name may be <code>null</code> or {@code null}.
      */
     NestedStatic(String name) {
       this._name = Objects.toString(name, DEFAULT_NAME);
