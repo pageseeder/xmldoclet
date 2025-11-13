@@ -5,7 +5,6 @@ import jdk.javadoc.doclet.Taglet;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,7 +42,7 @@ public final class TagletOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-taglet");
+    return List.of("-taglet");
   }
 
   @Override

@@ -5,7 +5,6 @@ import jdk.javadoc.doclet.Reporter;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public final class AnnotatedOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-annotated");
+    return List.of("-annotated");
   }
 
   @Override

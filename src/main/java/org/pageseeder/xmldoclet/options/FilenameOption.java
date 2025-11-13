@@ -3,7 +3,6 @@ package org.pageseeder.xmldoclet.options;
 import jdk.javadoc.doclet.Reporter;
 import org.eclipse.jdt.annotation.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,7 +47,7 @@ public final class FilenameOption extends XMLDocletOptionBase {
 
   @Override
   public List<String> getNames() {
-    return Collections.singletonList("-filename");
+    return List.of("-filename");
   }
 
   @Override
