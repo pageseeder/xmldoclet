@@ -3,7 +3,9 @@ package org.example;
 /**
  * This is a sample base class.
  *
- * <p>Here is an inline taglet example {@glossary base_class}.</p>
+ * <p>Here is an inline taglet example {@glossary base_class}.
+ *
+ * <p>With an mismatching <code>element</cde>
  *
  * @error-id 1234 An error ID
  */

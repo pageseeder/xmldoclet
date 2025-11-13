@@ -14,6 +14,11 @@ import java.util.Objects;
  * </ul>
  *
  * @see NestedStatic#toString()
+ *
+ * @version 1.0
+ * @version 2.0
+ * @since 0.5
+ * @since 0.6
  */
 public class SampleImpl extends SampleBase {
 
