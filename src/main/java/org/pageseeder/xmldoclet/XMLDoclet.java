@@ -54,6 +54,19 @@ public final class XMLDoclet implements Doclet {
   private static final Set<Modifier> BOOLEAN_MODIFIERS = EnumSet.complementOf(EnumSet.of(Modifier.PRIVATE, Modifier.PUBLIC, Modifier.PROTECTED));
 
   /**
+   *
+   * singleton tags is necessary for processing or transforming documentation elements.
+   */
+  private static final Set<DocTree.Kind> SINGLETON_TAGS = Collections.unmodifiableSet(EnumSet.of(
+      DocTree.Kind.VERSION,
+      DocTree.Kind.SINCE,
+      DocTree.Kind.SERIAL,
+      DocTree.Kind.SERIAL_DATA,
+      DocTree.Kind.SERIAL_FIELD,
+      DocTree.Kind.DEPRECATED
+  ));
+
+  /**
    * The reporter provided by the run method.
    */
   private Reporter reporter;
@@ -476,7 +489,7 @@ public final class XMLDoclet implements Doclet {
 
     // Handle the tags
     if (commentTree != null) {
-
+      checkSingletonTags(element, commentTree);
       for (DocTree tag : commentTree.getBlockTags()) {
         BlockTagTree block = (BlockTagTree) tag;
         Taglet taglet = this.options.getTagletForName(block.getTagName());
@@ -488,6 +501,16 @@ public final class XMLDoclet implements Doclet {
 
     // Add the node to the host
     return nodes;
+  }
+
+  void checkSingletonTags(Element element, DocCommentTree commentTree) {
+    EnumSet<DocTree.Kind> found = EnumSet.noneOf(DocTree.Kind.class);
+    for (DocTree tag : commentTree.getBlockTags()) {
+      if (SINGLETON_TAGS.contains(tag.getKind()) && found.contains(tag.getKind())) {
+        this.reporter.print(Diagnostic.Kind.WARNING, element, "Duplicate tag "+tag.toString()+" found");
+      }
+      found.add(tag.getKind());
+    }
   }
 
   /**
