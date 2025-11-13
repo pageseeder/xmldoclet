@@ -285,8 +285,8 @@ public final class XMLNode {
 
     // This node has text
     if (this.content.length() > 0) {
-      // Wrapping text in a separate node allows for good presentation of data with out adding extra data.
-      out.append(encode(this.content.toString(), this.doc, this.line));
+      // Wrapping text in a separate node allows for good presentation of data without adding extra data.
+      out.append(encode(this.content.toString()));
     }
 
     // Serialise children
@@ -308,10 +308,10 @@ public final class XMLNode {
    * Encodes strings as XML. Check for <, >, ', ", &.
    *
    * @param text The input string.
-   * @param element The source java document the node belongs to.
+   *
    * @return The encoded string.
    */
-  private static String encode(String text, @Nullable Element element, int line) {
+  private static String encode(String text) {
     if (text.indexOf('<') >= 0) return text;
     else return encodeElement(text);
   }
@@ -356,16 +356,6 @@ public final class XMLNode {
       }
     }
     return out.toString();
-  }
-
-  private static int countLines(String text) {
-    int lineCount = 0;
-    int i = text.indexOf('\n');
-    while (i != -1) {
-      lineCount++;
-      i = text.indexOf('\n', i+1);
-    }
-    return lineCount;
   }
 
 }
