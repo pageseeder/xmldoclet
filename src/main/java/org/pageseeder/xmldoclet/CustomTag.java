@@ -19,6 +19,7 @@ import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.UnknownBlockTagTree;
 import com.sun.source.doctree.UnknownInlineTagTree;
 import jdk.javadoc.doclet.Taglet;
+import org.eclipse.jdt.annotation.Nullable;
 
 import javax.lang.model.element.Element;
 import java.util.EnumSet;
@@ -42,7 +43,7 @@ public final class CustomTag implements Taglet {
   /**
    * The title/header/description for the tag.
    */
-  private String title;
+  private @Nullable String title;
 
   /** Whether the tag appears inline or not. */
   private final boolean isInline;
@@ -85,6 +86,8 @@ public final class CustomTag implements Taglet {
    *  m (methods)
    *  f (fields)
    * </pre>
+   *
+   * @param scope the scope to use.
    */
   public void setScope(String scope) {
     if (scope.indexOf('a') >= 0) {
@@ -123,7 +126,7 @@ public final class CustomTag implements Taglet {
   /**
    * @return the title to use for this tag.
    */
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return this.title;
   }
 

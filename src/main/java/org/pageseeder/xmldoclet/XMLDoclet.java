@@ -20,6 +20,7 @@ import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.Taglet;
+import org.eclipse.jdt.annotation.Nullable;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
  * @author Christophe Lauret
  * @version 1.0
  */
+@SuppressWarnings("java:S1192") // It's easier to read like this
 public final class XMLDoclet implements Doclet {
 
   /**
@@ -51,6 +53,22 @@ public final class XMLDoclet implements Doclet {
 
   private static final Set<Modifier> BOOLEAN_MODIFIERS = EnumSet.complementOf(EnumSet.of(Modifier.PRIVATE, Modifier.PUBLIC, Modifier.PROTECTED));
 
+  /**
+   *
+   * singleton tags is necessary for processing or transforming documentation elements.
+   */
+  private static final Set<DocTree.Kind> SINGLETON_TAGS = Collections.unmodifiableSet(EnumSet.of(
+      DocTree.Kind.VERSION,
+      DocTree.Kind.SINCE,
+      DocTree.Kind.SERIAL,
+      DocTree.Kind.SERIAL_DATA,
+      DocTree.Kind.SERIAL_FIELD,
+      DocTree.Kind.DEPRECATED
+  ));
+
+  /**
+   * The reporter provided by the run method.
+   */
   private Reporter reporter;
 
   /**
@@ -107,19 +125,33 @@ public final class XMLDoclet implements Doclet {
     for (TypeElement element : ElementFilter.typesIn(this.env.getIncludedElements())) {
       // Apply the filters from options
       if (this.options.filter(element)) {
-        nodes.add(toClassNode(element));
+        try {
+          nodes.add(toClassNode(element));
+        } catch (Exception ex) {
+          reporter.print(Diagnostic.Kind.ERROR, element, ex.getMessage());
+          ex.printStackTrace();
+        }
       }
     }
 
     // Iterate over packages
     if (!options.hasFilter()) {
       for (PackageElement element : ElementFilter.packagesIn(this.env.getIncludedElements())) {
-        nodes.add(toPackageNode(element));
+        try {
+          nodes.add(toPackageNode(element));
+        } catch (Exception ex) {
+          reporter.print(Diagnostic.Kind.ERROR, element, ex.getMessage());
+        }
       }
     }
 
     // Save the output XML
-    save(nodes);
+    try {
+      save(nodes);
+    } catch (DocletException ex) {
+      reporter.print(Diagnostic.Kind.ERROR, ex.getElement(), ex.getMessage());
+      return false;
+    }
 
     return true;
   }
@@ -150,8 +182,10 @@ public final class XMLDoclet implements Doclet {
    * "-multiple" flag is used or not.
    *
    * @param nodes The array of nodes to be saved.
+   *
+   * @throws DocletException If an error occurs while saving the files.
    */
-  private void save(List<XMLNode> nodes) {
+  private void save(List<XMLNode> nodes) throws DocletException {
     // Add admin node
     XMLNode meta = new XMLNode("meta");
     DateFormat df = new SimpleDateFormat(ISO_8601);
@@ -241,6 +275,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @param typeElement The class to transform.
    */
+  @SuppressWarnings("java:3776")
   private XMLNode toClassNode(TypeElement typeElement) {
     XMLNode node = new XMLNode("class", typeElement);
 
@@ -267,7 +302,7 @@ public final class XMLDoclet implements Doclet {
 
     // Interfaces
     List<? extends TypeMirror> interfaces = typeElement.getInterfaces();
-    if (interfaces.size() > 0) {
+    if (!interfaces.isEmpty()) {
       XMLNode implement = new XMLNode("implements");
       for (TypeMirror type : interfaces) {
         XMLNode interfce = new XMLNode("interface");
@@ -322,7 +357,7 @@ public final class XMLDoclet implements Doclet {
     node.attribute("type", toSimpleType(field.asType()));
     node.attribute("fulltype", field.asType().toString());
 
-    if (field.getConstantValue() != null && field.getConstantValue().toString().length() > 0) {
+    if (field.getConstantValue() != null && !field.getConstantValue().toString().isEmpty()) {
       node.attribute("const", field.getConstantValue().toString());
     }
 
@@ -342,7 +377,7 @@ public final class XMLDoclet implements Doclet {
     return node;
   }
 
-  private XMLNode toConstructorsNode(TypeElement element) {
+  private @Nullable XMLNode toConstructorsNode(TypeElement element) {
     List<ExecutableElement> constructors = ElementFilter.constructorsIn(element.getEnclosedElements());
     if (constructors.isEmpty()) return null;
 
@@ -362,7 +397,7 @@ public final class XMLDoclet implements Doclet {
   /**
    * Transforms an array of methods and an array of constructor methods into XML and adds those to the host node.
    */
-  private XMLNode toMethods(TypeElement element) {
+  private @Nullable XMLNode toMethods(TypeElement element) {
     List<ExecutableElement> methods = ElementFilter.methodsIn(element.getEnclosedElements());
     if (methods.isEmpty()) return null;
 
@@ -387,7 +422,7 @@ public final class XMLDoclet implements Doclet {
       ReturnTree returnTree = findReturnTree(method);
       if (returnTree != null) {
         XMLNode comment = new XMLNode("return", element, -1); // TODO doc.position().line()
-        String markup = Markup.asString(returnTree.getDescription(), this.options, false);
+        String markup = Markup.toString(element, returnTree.getDescription(), this.options, this.reporter, false);
         comment.text(markup);
         methodNode.child(comment);
       }
@@ -405,7 +440,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @return the fields or <code>null</code> if none.
    */
-  private XMLNode toFieldsNode(TypeElement element) {
+  private @Nullable XMLNode toFieldsNode(TypeElement element) {
     List<VariableElement> fields = ElementFilter.fieldsIn(element.getEnclosedElements());
     if (fields.isEmpty()) return null;
     // Iterate over the fields
@@ -454,7 +489,7 @@ public final class XMLDoclet implements Doclet {
 
     // Handle the tags
     if (commentTree != null) {
-
+      checkSingletonTags(element, commentTree);
       for (DocTree tag : commentTree.getBlockTags()) {
         BlockTagTree block = (BlockTagTree) tag;
         Taglet taglet = this.options.getTagletForName(block.getTagName());
@@ -468,10 +503,20 @@ public final class XMLDoclet implements Doclet {
     return nodes;
   }
 
+  void checkSingletonTags(Element element, DocCommentTree commentTree) {
+    EnumSet<DocTree.Kind> found = EnumSet.noneOf(DocTree.Kind.class);
+    for (DocTree tag : commentTree.getBlockTags()) {
+      if (SINGLETON_TAGS.contains(tag.getKind()) && found.contains(tag.getKind())) {
+        this.reporter.print(Diagnostic.Kind.WARNING, element, "Duplicate tag "+tag.toString()+" found");
+      }
+      found.add(tag.getKind());
+    }
+  }
+
   /**
    * Transforms comments on the Doc object into XML.
    */
-  private XMLNode toTags(Element element) {
+  private @Nullable XMLNode toTags(Element element) {
     DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(element);
     if (comment == null) return null;
     List<? extends DocTree> blockTags = comment.getBlockTags();
@@ -508,7 +553,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @return the XML for the specified parameters using the param tags for additional description.
    */
-  private XMLNode toParametersNode(ExecutableElement member) {
+  private @Nullable XMLNode toParametersNode(ExecutableElement member) {
     List<? extends VariableElement> parameters = member.getParameters();
     if (parameters.isEmpty()) return null;
 
@@ -516,7 +561,7 @@ public final class XMLDoclet implements Doclet {
     XMLNode node = new XMLNode("parameters");
     for (VariableElement parameter : parameters) {
       ParamTree comment = findParamTree(member, parameter.getSimpleName().toString());
-      XMLNode p = toParameterNode(parameter, comment);
+      XMLNode p = toParameterNode(member, parameter, comment);
       node.child(p);
     }
 
@@ -528,7 +573,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @return the XML for the specified parameters using the param tags for additional description.
    */
-  private XMLNode toExceptionsNode(ExecutableElement member) {
+  private @Nullable XMLNode toExceptionsNode(ExecutableElement member) {
     List<? extends TypeMirror> thrownTypes = member.getThrownTypes();
     if (thrownTypes.isEmpty()) return null;
 
@@ -536,7 +581,7 @@ public final class XMLDoclet implements Doclet {
     XMLNode node = new XMLNode("exceptions");
     for (TypeMirror exception : thrownTypes) {
       ThrowsTree throwsTree = findThrowsTree(member, exception.toString());
-      XMLNode n = toExceptionNode(exception, throwsTree);
+      XMLNode n = toExceptionNode(member, exception, throwsTree);
       node.child(n);
     }
 
@@ -565,7 +610,7 @@ public final class XMLDoclet implements Doclet {
     return nodes;
   }
 
-  private XMLNode toAnnotationsNode(List<? extends AnnotationMirror> annotations) {
+  private @Nullable XMLNode toAnnotationsNode(List<? extends AnnotationMirror> annotations) {
     if (annotations.isEmpty()) return null;
     XMLNode node = new XMLNode("annotations");
     for (AnnotationMirror annotation : annotations) {
@@ -581,7 +626,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @param doc The See tag to process.
    */
-  private XMLNode toSeeNode(SeeTree doc) {
+  private @Nullable XMLNode toSeeNode(@Nullable SeeTree doc) {
     if (doc == null) return null;
     XMLNode see = new XMLNode("see");
     see.attribute("xlink:type", "simple");
@@ -624,14 +669,14 @@ public final class XMLDoclet implements Doclet {
    *
    * @return The corresponding XML.
    */
-  private XMLNode toParameterNode(VariableElement parameter, ParamTree comment) {
+  private @Nullable XMLNode toParameterNode(ExecutableElement member, @Nullable VariableElement parameter, @Nullable ParamTree comment) {
     if (parameter == null) return null;
     XMLNode node = new XMLNode("parameter");
     node.attribute("name", parameter.getSimpleName().toString());
     node.attribute("type", toSimpleType(parameter.asType()));
     node.attribute("fulltype", parameter.asType().toString());
     if (comment != null) {
-      String markup = Markup.asString(comment.getDescription(), this.options, false);
+      String markup = Markup.toString(member, comment.getDescription(), this.options, this.reporter, false);
       node.text(markup);
     }
     return node;
@@ -642,14 +687,14 @@ public final class XMLDoclet implements Doclet {
    *
    * @return The corresponding XML.
    */
-  private XMLNode toExceptionNode(TypeMirror exception, ThrowsTree throwsTree) {
+  private @Nullable XMLNode toExceptionNode(ExecutableElement member, @Nullable TypeMirror exception, @Nullable ThrowsTree throwsTree) {
     if (exception == null) return null;
     XMLNode node = new XMLNode("exception");
     node.attribute("type", toSimpleType(exception));
     node.attribute("fulltype", exception.toString());
     if (throwsTree != null) {
       node.attribute("comment", throwsTree.getDescription().toString());
-      String markup = Markup.asString(throwsTree.getDescription(), this.options, false);
+      String markup = Markup.toString(member, throwsTree.getDescription(), this.options, this.reporter, false);
       node.text(markup);
     }
     return node;
@@ -660,18 +705,18 @@ public final class XMLDoclet implements Doclet {
    *
    * @param element The element
    */
-  private XMLNode toComment(Element element) {
+  private @Nullable XMLNode toComment(Element element) {
     DocCommentTree commentTree = this.env.getDocTrees().getDocCommentTree(element);
     if (commentTree == null || commentTree.toString().isEmpty()) return null;
     XMLNode node = new XMLNode("comment", element, -1); // TODO doc.position().line()
-    String markup = Markup.asString(commentTree.getFullBody(), this.options, true);
+    String markup = Markup.toString(element, commentTree.getFullBody(), this.options, this.reporter, true);
     return node.text(markup);
   }
 
   /**
    * @return an "annotation" XML node for the annotation.
    */
-  private XMLNode toAnnotationNode(AnnotationMirror annotation) {
+  private @Nullable XMLNode toAnnotationNode(@Nullable AnnotationMirror annotation) {
     if (annotation == null) return null;
     XMLNode node = new XMLNode("annotation");
     node.attribute("name", annotation.getAnnotationType().asElement().getSimpleName().toString());
@@ -698,7 +743,7 @@ public final class XMLDoclet implements Doclet {
    *
    * @return an "value" or "array" XML node for the annotation value.
    */
-  private XMLNode toAnnotationValueNode(AnnotationValue value) {
+  private @Nullable XMLNode toAnnotationValueNode(@Nullable AnnotationValue value) {
     if (value == null) return null;
     XMLNode node = null;
     Object o = value.getValue();
@@ -758,7 +803,7 @@ public final class XMLDoclet implements Doclet {
   /**
    * Find the corresponding throws tag
    */
-  private ThrowsTree findThrowsTree(ExecutableElement member, String name) {
+  private @Nullable ThrowsTree findThrowsTree(ExecutableElement member, String name) {
     DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(member);
     if (comment == null) return null;
     for (DocTree tree : comment.getBlockTags()) {
@@ -773,7 +818,7 @@ public final class XMLDoclet implements Doclet {
   /**
    * Find the corresponding parameter tag.
    */
-  private ParamTree findParamTree(ExecutableElement member, String name) {
+  private @Nullable ParamTree findParamTree(ExecutableElement member, String name) {
     DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(member);
     if (comment == null) return null;
     for (DocTree tree : comment.getBlockTags()) {
@@ -789,7 +834,7 @@ public final class XMLDoclet implements Doclet {
   /**
    * Find the corresponding return tag.
    */
-  private ReturnTree findReturnTree(ExecutableElement member) {
+  private @Nullable ReturnTree findReturnTree(ExecutableElement member) {
     DocCommentTree comment = this.env.getDocTrees().getDocCommentTree(member);
     if (comment == null) return null;
     for (DocTree tree : comment.getBlockTags()) {
@@ -799,7 +844,6 @@ public final class XMLDoclet implements Doclet {
     }
     return null;
   }
-
 
   /**
    * Returns the value type of the annotation depending on the specified object's class.
