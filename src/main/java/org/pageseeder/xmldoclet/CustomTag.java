@@ -28,7 +28,9 @@ import java.util.*;
  * A custom tag for tags specified using the -tag option.
  *
  * @author Christophe Lauret
+ *
  * @version 1.0
+ * @since 1.0
  */
 public final class CustomTag implements Taglet {
 
@@ -136,14 +138,6 @@ public final class CustomTag implements Taglet {
   @Override
   public boolean isInlineTag() {
     return this.isInline;
-  }
-
-  private String toString(UnknownBlockTagTree block) {
-    return toString(block.getContent());
-  }
-
-  private String toString(UnknownInlineTagTree inline) {
-    return toString(inline.getContent());
   }
 
   public String toString(List<? extends DocTree> contents) {
