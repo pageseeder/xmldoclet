@@ -422,8 +422,8 @@ public final class XMLDoclet implements Doclet {
       ReturnTree returnTree = findReturnTree(method);
       if (returnTree != null) {
         XMLNode comment = new XMLNode("return", element, -1); // TODO doc.position().line()
-        String markup = Markup.toString(element, returnTree.getDescription(), this.options, this.reporter, false);
-        comment.text(markup);
+        String markup = Markup.toString(returnTree.getDescription(), element, this.options, this.reporter, false);
+        comment.markup(markup);
         methodNode.child(comment);
       }
 
@@ -534,8 +534,8 @@ public final class XMLDoclet implements Doclet {
         if (taglet != null) {
           XMLNode tNode = new XMLNode("tag");
           tNode.attribute("name", block.getTagName());
-          String contents = taglet.toString(Collections.singletonList(block), element);
-          tNode.text(contents);
+          String contents = taglet.toString(List.of(block), element);
+          tNode.markup(contents);
           node.child(tNode);
           hasTags = true;
         }
@@ -593,9 +593,9 @@ public final class XMLDoclet implements Doclet {
    */
   private List<XMLNode> toSeeNodes(Element element) {
     DocCommentTree tree = this.env.getDocTrees().getDocCommentTree(element);
-    if (tree == null) return Collections.emptyList();
+    if (tree == null) return List.of();
     List<? extends DocTree> blockTags = tree.getBlockTags();
-    if (blockTags.isEmpty()) return Collections.emptyList();
+    if (blockTags.isEmpty()) return List.of();
     List<XMLNode> nodes = new ArrayList<>();
     for (DocTree tag : blockTags) {
       if (tag.getKind() == DocTree.Kind.SEE) {
@@ -676,8 +676,8 @@ public final class XMLDoclet implements Doclet {
     node.attribute("type", toSimpleType(parameter.asType()));
     node.attribute("fulltype", parameter.asType().toString());
     if (comment != null) {
-      String markup = Markup.toString(member, comment.getDescription(), this.options, this.reporter, false);
-      node.text(markup);
+      String markup = Markup.toString(comment.getDescription(), member, this.options, this.reporter, false);
+      node.markup(markup);
     }
     return node;
   }
@@ -694,8 +694,8 @@ public final class XMLDoclet implements Doclet {
     node.attribute("fulltype", exception.toString());
     if (throwsTree != null) {
       node.attribute("comment", throwsTree.getDescription().toString());
-      String markup = Markup.toString(member, throwsTree.getDescription(), this.options, this.reporter, false);
-      node.text(markup);
+      String markup = Markup.toString(throwsTree.getDescription(), member, this.options, this.reporter, false);
+      node.markup(markup);
     }
     return node;
   }
@@ -709,8 +709,8 @@ public final class XMLDoclet implements Doclet {
     DocCommentTree commentTree = this.env.getDocTrees().getDocCommentTree(element);
     if (commentTree == null || commentTree.toString().isEmpty()) return null;
     XMLNode node = new XMLNode("comment", element, -1); // TODO doc.position().line()
-    String markup = Markup.toString(element, commentTree.getFullBody(), this.options, this.reporter, true);
-    return node.text(markup);
+    String markup = Markup.toString(commentTree.getFullBody(), element, this.options, this.reporter, true);
+    return node.markup(markup);
   }
 
   /**
@@ -780,7 +780,7 @@ public final class XMLDoclet implements Doclet {
   // Utilities ====================================================================================
 
   /**
-   * Sets the visibility for the class, method or field.
+   * Sets the visibility for the class, method, or field.
    *
    * @param element The member for which the visibility needs to be set (class, method, or field).
    */
@@ -830,7 +830,6 @@ public final class XMLDoclet implements Doclet {
     return null;
   }
 
-
   /**
    * Find the corresponding return tag.
    */
@@ -869,7 +868,6 @@ public final class XMLDoclet implements Doclet {
     }
     return type.toString();
   }
-
 
   private Set<Modifier> toBooleanModifiers(Element element) {
     return element.getModifiers().stream()

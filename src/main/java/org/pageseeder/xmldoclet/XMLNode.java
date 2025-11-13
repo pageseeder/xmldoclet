@@ -192,15 +192,33 @@ public final class XMLNode {
   /**
    * Adds text to the content of the node.
    *
+   * <p>This method automatically escapes the text for XML.
+   *
    * @param text The text.
    * @return this node for chaining.
    */
   public XMLNode text(@Nullable String text) {
     if (text != null) {
-      this.content.append(text);
+      this.content.append(encodeElement(text));
     }
     return this;
   }
+
+  /**
+   * Adds text to the content of the node.
+   *
+   * <p>This method does not escape the text for XML and copied the string verbatim to the output.
+   *
+   * @param markup The text.
+   * @return this node for chaining.
+   */
+  public XMLNode markup(@Nullable String markup) {
+    if (markup != null) {
+      this.content.append(markup);
+    }
+    return this;
+  }
+
 
   /**
    * Returns the specified attributed.

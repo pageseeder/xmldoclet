@@ -38,15 +38,15 @@ public class Markup {
    * Converts the given element and associated documentation trees into a formatted string
    * representation according to the provided options.
    *
-   * @param element    The element to be represented as a string.
-   * @param trees      A list of documentation trees associated with the element.
+   * @param trees      A list of documentation trees to be represented as a string.
+   * @param element    The content element
    * @param options    Configuration options affecting the output.
    * @param reporter   A reporter used for logging or error reporting during processing.
    * @param hasBlocks  Indicates whether block elements are present in the input data.
    *
    * @return A formatted string representation of the element and its associated documentation trees.
    */
-  public static String toString(Element element, List<? extends DocTree> trees, Options options, Reporter reporter, boolean hasBlocks) {
+  public static String toString(List<? extends DocTree> trees, Element element, Options options, Reporter reporter, boolean hasBlocks) {
     Markup markup = new Markup(options, reporter, hasBlocks);
     markup.typeElement = element;
     markup.addAll(trees);
@@ -78,7 +78,6 @@ public class Markup {
   @Override
   public String toString() {
     closeAllElements();
-    // TODO Close any element before returning
     return this.xml.toString();
   }
 
@@ -172,19 +171,18 @@ public class Markup {
   private void addInlineTag(InlineTagTree inlineTag) {
     Taglet taglet = this.options.getTagletForName("@"+inlineTag.getTagName());
     if (taglet != null) {
-      String val = taglet.toString(Collections.singletonList(inlineTag), null);
-      this.xml.append(taglet.toString(Collections.singletonList(inlineTag), null));
+      this.xml.append(taglet.toString(List.of(inlineTag), this.typeElement));
     } else {
-      // TODO Unexpected tag
-      this.xml.append(inlineTag.toString());
+      // Unexpected tag
+      this.reporter.print(Diagnostic.Kind.WARNING, this.typeElement, "Found unknown inline tag: "+inlineTag.getTagName());
+      this.xml.append(inlineTag);
     }
   }
 
   private void addBlockTag(BlockTagTree blockTag) {
     Taglet taglet = this.options.getTagletForName(blockTag.getTagName());
-    //      TODO
     if (taglet != null) {
-      this.xml.append(taglet.toString(Collections.singletonList(blockTag), null));
+      this.xml.append(taglet.toString(List.of(blockTag), this.typeElement));
     } else {
       this.xml.append(blockTag);
     }

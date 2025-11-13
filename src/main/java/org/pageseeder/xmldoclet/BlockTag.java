@@ -34,17 +34,7 @@ public enum BlockTag implements Taglet {
   /**
    * Taglet for the <code>@author</code> tag.
    */
-  AUTHOR("author") {
-
-    @Override
-    public String toString(DocTree tag) {
-      if (tag instanceof AuthorTree) {
-        return "<author>"+((AuthorTree)tag).getName()+"</author>";
-      }
-      return "<author>"+tag.toString()+"</author>";
-    }
-
-  },
+  AUTHOR("author"),
 
   DEPRECATED("deprecated"),
 
@@ -54,32 +44,9 @@ public enum BlockTag implements Taglet {
 
   SERIAL_FIELD("serialField"),
 
-  SINCE("since") {
-    @Override
-    public String toString(DocTree tag) {
-      if (tag instanceof SinceTree) {
-        // TODO
-        return "<since>"+((SinceTree) tag).getBody().toString()+"</since>";
-      }
-      // TODO What if not SinceTree?
-      return "<since>"+tag.toString()+"</since>";
-    }
+  SINCE("since"),
 
-  },
-
-  VERSION("version"){
-
-    @Override
-    public String toString(DocTree tag) {
-      if (tag instanceof VersionTree) {
-        // TODO
-        return "<version>"+((VersionTree) tag).getBody().toString()+"</version>";
-      }
-      // TODO What if not VersionTree?
-      return "<version>"+tag.toString()+"</version>";
-    }
-
-  };
+  VERSION("version");
 
   /**
    * The name of the tag
@@ -102,50 +69,25 @@ public enum BlockTag implements Taglet {
     if (tag instanceof DeprecatedTree) {
       return new XMLNode("deprecated").text(((DeprecatedTree)tag).getBody().toString());
     }
-    if (tag instanceof HiddenTree) {
-      return new XMLNode("hidden").text(((HiddenTree)tag).getBody().toString());
-    }
-    if (tag instanceof ParamTree) {
-      // TODO
-      return new XMLNode("param").text(((ParamTree)tag).getDescription().toString());
-    }
-    if (tag instanceof ProvidesTree) {
-      // TODO
-      return new XMLNode("provides").text(((ProvidesTree)tag).getDescription().toString());
-    }
-    if (tag instanceof ReturnTree) {
-      // TODO
-      return new XMLNode("return").text(((ReturnTree)tag).getDescription().toString());
-    }
-    if (tag instanceof SeeTree) {
-
-    }
-    if (tag instanceof SerialDataTree) {
-
-    }
-    if (tag instanceof SerialFieldTree) {
-
-    }
-    if (tag instanceof SerialTree) {
-
-    }
     if (tag instanceof SinceTree) {
-      return new XMLNode(this.name).text(((SinceTree) tag).getBody().toString());
+      String since = ((SinceTree) tag).getBody().toString();
+      return new XMLNode(this.name).text(since);
     }
     if (tag instanceof ThrowsTree) {
-      // TODO
-      return new XMLNode(this.name).text(((ThrowsTree) tag).getDescription().toString());
+      String throwsText = ((ThrowsTree) tag).getDescription().toString();
+      return new XMLNode(this.name).text(throwsText);
     }
     if (tag instanceof UnknownBlockTagTree) {
       // TODO
       return new XMLNode(this.name).text(((UnknownBlockTagTree) tag).getContent().toString());
     }
-    if (tag instanceof UsesTree) {
-      // TODO
-      return new XMLNode(this.name).text(((UsesTree) tag).getDescription().toString());
-    }
     if (tag instanceof VersionTree) {
-      return new XMLNode("version").text(((VersionTree) tag).getBody().toString());
+      String version = ((VersionTree) tag).getBody().toString();
+      return new XMLNode("version").text(version);
+    }
+    if (tag instanceof SerialTree) {
+      String description = ((SerialTree) tag).getDescription().toString();
+      return new XMLNode("serial").text(description);
     }
     return new XMLNode(this.name).text(tag.toString());
   }
@@ -158,7 +100,7 @@ public enum BlockTag implements Taglet {
   }
 
   public String toString(DocTree tag) {
-    return tag.toString();
+    return toXMLNode(tag).toString("");
   }
 
   public String toString(List<? extends DocTree> tags, Element element) {
