@@ -29,20 +29,12 @@ java {
 
 dependencies {
     compileOnly(libs.annotations)
-
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.bundles.junit)
-    testImplementation(libs.annotations)
 }
 
 // Set Gradle version
 tasks.wrapper {
     gradleVersion = "8.14"
     distributionType = Wrapper.DistributionType.ALL
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.withType<Javadoc> {
